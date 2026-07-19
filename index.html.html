@@ -36,15 +36,15 @@
   .toast-info { background: linear-gradient(90deg, #0ea5e9, #0284c7); }
   @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
   
-  #login-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 10000; display: flex; align-items: center; justify-content: center; }
-  
-  .debug-box { background: #1e293b; color: #94a3b8; font-family: monospace; font-size: 11px; padding: 8px; border-radius: 6px; margin-top: 12px; max-height: 100px; overflow-y: auto; }
+  /* ✅ CORREÇÃO: Removido display: flex do CSS */
+  #login-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 10000; align-items: center; justify-content: center; }
+  #login-screen.flex-active { display: flex; }
 </style>
 </head>
 <body class="min-h-screen">
 
 <!-- TELA DE LOGIN -->
-<div id="login-screen">
+<div id="login-screen" class="flex-active">
   <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md fade-in">
     <div class="text-center mb-6">
       <div class="w-20 h-20 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4">
@@ -79,13 +79,12 @@
       <button onclick="resetSistema()" class="w-full text-xs text-slate-400 hover:text-rose-500 transition py-2">
         <i class="fas fa-exclamation-triangle mr-1"></i> Resetar sistema (em caso de erro)
       </button>
-      <div id="debug-info" class="debug-box hidden"></div>
     </div>
   </div>
 </div>
 
 <!-- APP PRINCIPAL -->
-<div id="app-container" class="flex min-h-screen hidden">
+<div id="app-container" class="flex min-h-screen" style="display: none;">
   <aside class="sidebar w-72 text-white fixed h-screen overflow-y-auto z-10">
     <div class="p-6 border-b border-slate-700">
       <div class="flex items-center gap-3">
@@ -389,26 +388,20 @@ let usuarios = [];
 let configuracoes = { nome: 'TG Vet Diagnósticos', endereco: 'Rua dos Animais, 123', telefone: '(11) 99999-9999', resp: 'Dr. Veterinário - CRMV-XX 00000' };
 let currentUser = null;
 
-// ============ USUÁRIOS PADRÃO (GARANTIDOS) ============
 const USUARIOS_PADRAO = [
   { id: 1, username: 'admin', password: 'admin123', role: 'admin', nome: 'Administrador' },
   { id: 2, username: 'vet', password: 'vet123', role: 'vet', nome: 'Dr. Veterinário' }
 ];
 
-// ============ CARREGAR DADOS (CORRIGIDO) ============
 function carregarDados() {
   try {
     pacientes = JSON.parse(localStorage.getItem('tgv_pacientes') || '[]');
     laudos = JSON.parse(localStorage.getItem('tgv_laudos') || '[]');
     configuracoes = JSON.parse(localStorage.getItem('tgv_config') || JSON.stringify(configuracoes));
     
-    // ✅ CORREÇÃO: Carrega usuários e GARANTE que os padrão existam
     let usuariosStorage = JSON.parse(localStorage.getItem('tgv_usuarios') || '[]');
-    
-    // Se não for array válido, resetar
     if (!Array.isArray(usuariosStorage)) usuariosStorage = [];
     
-    // Verifica se admin e vet existem
     const temAdmin = usuariosStorage.some(u => u && u.username === 'admin');
     const temVet = usuariosStorage.some(u => u && u.username === 'vet');
     
@@ -418,11 +411,7 @@ function carregarDados() {
     usuarios = usuariosStorage;
     localStorage.setItem('tgv_usuarios', JSON.stringify(usuarios));
     
-    console.log('✅ Dados carregados:', { 
-      pacientes: pacientes.length, 
-      laudos: laudos.length, 
-      usuarios: usuarios.length 
-    });
+    console.log('✅ Dados carregados:', { pacientes: pacientes.length, laudos: laudos.length, usuarios: usuarios.length });
   } catch (e) {
     console.error('❌ Erro ao carregar:', e);
     usuarios = [...USUARIOS_PADRAO];
@@ -444,17 +433,14 @@ function salvarDados() {
   }
 }
 
-// ============ LOGIN (COM DEBUG) ============
+// ✅ CORREÇÃO: Manipulação direta do display
 function checkAuth() {
   try {
     const session = sessionStorage.getItem('tgv_session');
     if (session) {
       currentUser = JSON.parse(session);
       if (currentUser && currentUser.username) {
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('app-container').classList.remove('hidden');
-        aplicarPermissoes();
-        atualizarDashboard();
+        mostrarApp();
         return;
       }
     }
@@ -462,9 +448,19 @@ function checkAuth() {
     console.error('Erro na sessão:', e);
     sessionStorage.removeItem('tgv_session');
   }
-  // Mostra tela de login
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('app-container').classList.add('hidden');
+  mostrarLogin();
+}
+
+function mostrarLogin() {
+  document.getElementById('login-screen').classList.add('flex-active');
+  document.getElementById('app-container').style.display = 'none';
+}
+
+function mostrarApp() {
+  document.getElementById('login-screen').classList.remove('flex-active');
+  document.getElementById('app-container').style.display = 'flex';
+  aplicarPermissoes();
+  atualizarDashboard();
 }
 
 document.getElementById('form-login').addEventListener('submit', function(e) {
@@ -475,16 +471,13 @@ document.getElementById('form-login').addEventListener('submit', function(e) {
   const errorMsg = document.getElementById('login-error-msg');
   
   console.log('🔐 Tentativa de login:', { user, passLength: pass.length });
-  console.log('📋 Usuários disponíveis:', usuarios.map(u => u.username));
   
-  // Validação
   if (!user || !pass) {
     errorMsg.textContent = 'Preencha usuário e senha.';
     errorBox.classList.remove('hidden');
     return;
   }
   
-  // Busca usuário
   const found = usuarios.find(u => u && u.username === user && u.password === pass);
   
   if (found) {
@@ -492,14 +485,11 @@ document.getElementById('form-login').addEventListener('submit', function(e) {
     currentUser = found;
     sessionStorage.setItem('tgv_session', JSON.stringify(found));
     errorBox.classList.add('hidden');
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('app-container').classList.remove('hidden');
-    aplicarPermissoes();
-    atualizarDashboard();
+    mostrarApp();
     showToast(`Bem-vindo, ${found.nome}!`, 'success');
   } else {
-    console.log('❌ Login falhou. Usuário ou senha incorretos.');
-    errorMsg.innerHTML = `Usuário ou senha incorretos.<br><small>Usuários disponíveis: <strong>${usuarios.map(u => u.username).join(', ')}</strong></small>`;
+    console.log('❌ Login falhou.');
+    errorMsg.innerHTML = `Usuário ou senha incorretos.<br><small>Disponíveis: <strong>${usuarios.map(u => u.username).join(', ')}</strong></small>`;
     errorBox.classList.remove('hidden');
   }
 });
@@ -507,10 +497,9 @@ document.getElementById('form-login').addEventListener('submit', function(e) {
 function logout() {
   sessionStorage.removeItem('tgv_session');
   currentUser = null;
-  document.getElementById('app-container').classList.add('hidden');
-  document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('form-login').reset();
   document.getElementById('login-error').classList.add('hidden');
+  mostrarLogin();
 }
 
 function aplicarPermissoes() {
@@ -527,16 +516,14 @@ function aplicarPermissoes() {
   }
 }
 
-// ============ RESET DE EMERGÊNCIA ============
 function resetSistema() {
-  if (confirm('⚠️ ATENÇÃO: Isso vai apagar TODOS os dados (pacientes, laudos, configurações). Os usuários padrão serão restaurados. Continuar?')) {
+  if (confirm('⚠️ ATENÇÃO: Isso vai apagar TODOS os dados. Continuar?')) {
     localStorage.clear();
     sessionStorage.clear();
     location.reload();
   }
 }
 
-// ============ NAVEGAÇÃO ============
 function showSection(sectionId) {
   document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
   document.getElementById('section-' + sectionId).classList.remove('hidden');
@@ -553,7 +540,6 @@ function showSection(sectionId) {
   }
 }
 
-// ============ DASHBOARD ============
 function atualizarDashboard() {
   document.getElementById('stat-total').textContent = laudos.length;
   document.getElementById('stat-pendentes').textContent = laudos.filter(l => l.status === 'pendente').length;
@@ -569,7 +555,6 @@ function atualizarDashboard() {
     laudos.slice(-5).reverse().map(l => `<div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white"><i class="fas fa-file-medical"></i></div><div class="flex-1"><p class="font-semibold text-slate-800">${l.tipo} - ${l.pacienteNome}</p><p class="text-xs text-slate-500">${l.data} • <span class="font-bold ${l.status === 'concluido' ? 'text-emerald-600' : l.status === 'pendente' ? 'text-amber-600' : 'text-rose-600'}">${l.status.toUpperCase()}</span></p></div></div>`).join('');
 }
 
-// ============ PACIENTES ============
 document.getElementById('form-paciente').addEventListener('submit', function(e) {
   e.preventDefault();
   const editId = document.getElementById('pac-edit-id').value;
@@ -645,7 +630,6 @@ function atualizarSelectPacientes(selectId) {
   pacientes.forEach(p => { select.innerHTML += `<option value="${p.id}">${p.nome} - ${p.especie} (${p.tutor})</option>`; });
 }
 
-// ============ LAUDOS ============
 function salvarLaudo(tipo, pacienteSelectId, editIdField, camposArray) {
   const pacienteId = document.getElementById(pacienteSelectId).value;
   if (!pacienteId) { showToast('Selecione um paciente!', 'error'); return; }
@@ -748,7 +732,6 @@ function excluirLaudo(id) {
   }
 }
 
-// ============ VISUALIZAÇÃO ============
 function verificarValor(valor, min, max) {
   const v = parseFloat(valor);
   if (isNaN(v) || valor === '' || valor === 'Negativo' || valor === 'Ausente' || valor === 'Não observado') return { classe: 'bg-slate-100 text-slate-500', texto: 'N/A' };
@@ -820,7 +803,6 @@ function baixarPDF() {
 
 function fecharModal() { document.getElementById('modal-laudos').classList.add('hidden'); }
 
-// ============ CONFIGURAÇÕES ============
 function renderizarConfiguracoes() {
   document.getElementById('conf-nome').value = configuracoes.nome;
   document.getElementById('conf-endereco').value = configuracoes.endereco;
@@ -848,7 +830,6 @@ function excluirUsuario(id) {
   if (confirm('Excluir?')) { usuarios = usuarios.filter(u => u.id !== id); salvarDados(); renderizarConfiguracoes(); }
 }
 
-// ============ TOAST ============
 function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
@@ -859,7 +840,6 @@ function showToast(message, type = 'info') {
 
 document.getElementById('modal-laudos').addEventListener('click', function(e) { if (e.target === this) fecharModal(); });
 
-// ============ INICIALIZAÇÃO ============
 carregarDados();
 checkAuth();
 console.log('✅ Sistema TG Vet inicializado');
