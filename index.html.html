@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TG System - Sistema Laboratorial Veterinário</title>
+<title>TG Vet Diagnósticos - Sistema Laboratorial</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://cdn.jsdelivr.net/npm/fontsource-roboto@4.0.0/index.min.css" rel="stylesheet">
 <style>
@@ -24,54 +25,66 @@
   .status-normal { background: #dcfce7; color: #166534; }
   .status-alto { background: #fee2e2; color: #991b1b; }
   .status-baixo { background: #fef3c7; color: #92400e; }
+  .status-pendente { background: #fef3c7; color: #92400e; }
+  .status-concluido { background: #dcfce7; color: #166534; }
+  .status-cancelado { background: #fee2e2; color: #991b1b; }
   
-  /* Classes estáticas para grupos de bioquímica (fix para Tailwind CDN) */
-  .grupo-renal { border-color: #f43f5e; }
-  .grupo-renal-bg { background-color: #fff1f2; }
-  .grupo-hepatica { border-color: #10b981; }
-  .grupo-hepatica-bg { background-color: #ecfdf5; }
-  .grupo-metabolismo { border-color: #f59e0b; }
-  .grupo-metabolismo-bg { background-color: #fffbeb; }
-  .grupo-lipidico { border-color: #f97316; }
-  .grupo-lipidico-bg { background-color: #fff7ed; }
-  .grupo-proteinas { border-color: #0ea5e9; }
-  .grupo-proteinas-bg { background-color: #f0f9ff; }
-  .grupo-minerais { border-color: #6366f1; }
-  .grupo-minerais-bg { background-color: #eef2ff; }
-  
+  .grupo-renal { border-color: #f43f5e; } .grupo-renal-bg { background-color: #fff1f2; }
+  .grupo-hepatica { border-color: #10b981; } .grupo-hepatica-bg { background-color: #ecfdf5; }
+  .grupo-metabolismo { border-color: #f59e0b; } .grupo-metabolismo-bg { background-color: #fffbeb; }
+  .grupo-lipidico { border-color: #f97316; } .grupo-lipidico-bg { background-color: #fff7ed; }
+  .grupo-proteinas { border-color: #0ea5e9; } .grupo-proteinas-bg { background-color: #f0f9ff; }
+  .grupo-minerais { border-color: #6366f1; } .grupo-minerais-bg { background-color: #eef2ff; }
+  .grupo-urina { border-color: #8b5cf6; } .grupo-urina-bg { background-color: #f5f3ff; }
+  .grupo-fezes { border-color: #78350f; } .grupo-fezes-bg { background-color: #fef3c7; }
+
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: #f1f5f9; }
   ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
   
-  .toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 16px 24px;
-    border-radius: 12px;
-    color: white;
-    font-weight: 600;
-    z-index: 9999;
-    animation: slideIn 0.3s ease;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  }
+  .toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; border-radius: 12px; color: white; font-weight: 600; z-index: 9999; animation: slideIn 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
   .toast-success { background: linear-gradient(90deg, #10b981, #059669); }
   .toast-error { background: linear-gradient(90deg, #ef4444, #dc2626); }
   .toast-info { background: linear-gradient(90deg, #0ea5e9, #0284c7); }
   @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-  
-  .print-area { display: none; }
-  @media print {
-    body * { visibility: hidden; }
-    .print-area, .print-area * { visibility: visible; }
-    .print-area { display: block; position: absolute; left: 0; top: 0; width: 100%; }
-  }
+
+  /* Login Screen */
+  #login-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); z-index: 10000; display: flex; align-items: center; justify-content: center; }
 </style>
 </head>
 <body class="min-h-screen">
 
-<div class="flex min-h-screen">
+<!-- TELA DE LOGIN -->
+<div id="login-screen">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md fade-in">
+    <div class="text-center mb-8">
+      <div class="w-20 h-20 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-3xl mx-auto mb-4">
+        <i class="fas fa-paw"></i>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-800">TG Vet Diagnósticos</h1>
+      <p class="text-slate-500">Acesse sua conta para continuar</p>
+    </div>
+    <form id="form-login" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Usuário</label>
+        <input type="text" id="login-user" required class="input-field w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none" placeholder="admin ou vet">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Senha</label>
+        <input type="password" id="login-pass" required class="input-field w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none" placeholder="••••••">
+      </div>
+      <button type="submit" class="btn-primary w-full py-3 rounded-lg text-white font-semibold text-lg">
+        <i class="fas fa-sign-in-alt mr-2"></i> Entrar
+      </button>
+      <p class="text-xs text-center text-slate-400 mt-4">
+        Demo: <strong>admin</strong> / <strong>admin123</strong> ou <strong>vet</strong> / <strong>vet123</strong>
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL (Oculto até login) -->
+<div id="app-container" class="flex min-h-screen hidden">
 
   <!-- Sidebar -->
   <aside class="sidebar w-72 text-white fixed h-screen overflow-y-auto z-10">
@@ -81,7 +94,7 @@
           <i class="fas fa-paw"></i>
         </div>
         <div>
-          <h1 class="text-lg font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">TG Vet</h1>
+          <h1 class="text-lg font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent" id="sidebar-clinic-name">TG Vet</h1>
           <p class="text-xs text-slate-400">Diagnósticos</p>
         </div>
       </div>
@@ -89,40 +102,49 @@
 
     <nav class="p-4 space-y-2">
       <button onclick="showSection('dashboard')" class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="dashboard">
-        <i class="fas fa-chart-line w-5"></i>
-        <span>Dashboard</span>
+        <i class="fas fa-chart-line w-5"></i><span>Dashboard</span>
       </button>
       <button onclick="showSection('guias')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="guias">
-        <i class="fas fa-paw w-5"></i>
-        <span>Guias de Paciente</span>
+        <i class="fas fa-paw w-5"></i><span>Guias de Paciente</span>
       </button>
       <button onclick="showSection('laudos')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="laudos">
-        <i class="fas fa-file-medical w-5"></i>
-        <span>Laudos</span>
+        <i class="fas fa-file-medical w-5"></i><span>Laudos</span>
       </button>
+      <div class="pt-2 pb-1 px-4 text-xs font-semibold text-slate-500 uppercase">Exames</div>
       <button onclick="showSection('hemograma')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="hemograma">
-        <i class="fas fa-vial w-5"></i>
-        <span>Hemograma</span>
+        <i class="fas fa-vial w-5"></i><span>Hemograma</span>
       </button>
       <button onclick="showSection('bioquimica')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="bioquimica">
-        <i class="fas fa-flask w-5"></i>
-        <span>Bioquímica</span>
+        <i class="fas fa-flask w-5"></i><span>Bioquímica</span>
       </button>
-      <button onclick="showSection('historico')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="historico">
-        <i class="fas fa-history w-5"></i>
-        <span>Histórico</span>
+      <button onclick="showSection('urina')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="urina">
+        <i class="fas fa-tint w-5"></i><span>Exame de Urina</span>
       </button>
+      <button onclick="showSection('fezes')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="fezes">
+        <i class="fas fa-search w-5"></i><span>Exame de Fezes</span>
+      </button>
+      
+      <!-- Admin Only -->
+      <div id="admin-menu" class="hidden">
+        <div class="pt-2 pb-1 px-4 text-xs font-semibold text-slate-500 uppercase">Administração</div>
+        <button onclick="showSection('configuracoes')" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left" data-section="configuracoes">
+          <i class="fas fa-cog w-5"></i><span>Configurações</span>
+        </button>
+      </div>
     </nav>
 
     <div class="p-4 mt-auto border-t border-slate-700">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center font-bold">
-          TV
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center font-bold" id="user-avatar">TV</div>
+          <div>
+            <p class="text-sm font-medium" id="user-name-display">Usuário</p>
+            <p class="text-xs text-slate-400" id="user-role-display">Cargo</p>
+          </div>
         </div>
-        <div>
-          <p class="text-sm font-medium">Dr. Veterinário</p>
-          <p class="text-xs text-slate-400">Administrador</p>
-        </div>
+        <button onclick="logout()" class="text-slate-400 hover:text-white transition" title="Sair">
+          <i class="fas fa-sign-out-alt text-xl"></i>
+        </button>
       </div>
     </div>
   </aside>
@@ -136,539 +158,342 @@
         <h2 class="text-3xl font-bold text-slate-800">Dashboard</h2>
         <p class="text-slate-500 mt-1">Visão geral do laboratório veterinário</p>
       </div>
-
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="card p-6">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-slate-500">Pacientes Cadastrados</p>
-              <p class="text-3xl font-bold text-slate-800 mt-2" id="stat-pacientes">0</p>
-            </div>
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white text-2xl">
-              <i class="fas fa-paw"></i>
-            </div>
+            <div><p class="text-sm text-slate-500">Exames Cadastrados</p><p class="text-3xl font-bold text-slate-800 mt-2" id="stat-total">0</p></div>
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-white text-2xl"><i class="fas fa-clipboard-list"></i></div>
           </div>
         </div>
         <div class="card p-6">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-slate-500">Laudos Emitidos</p>
-              <p class="text-3xl font-bold text-slate-800 mt-2" id="stat-laudos">0</p>
-            </div>
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl">
-              <i class="fas fa-file-medical"></i>
-            </div>
+            <div><p class="text-sm text-slate-500">Exames Pendentes</p><p class="text-3xl font-bold text-amber-600 mt-2" id="stat-pendentes">0</p></div>
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-2xl"><i class="fas fa-clock"></i></div>
           </div>
         </div>
         <div class="card p-6">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-slate-500">Hemogramas</p>
-              <p class="text-3xl font-bold text-slate-800 mt-2" id="stat-hemogramas">0</p>
-            </div>
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white text-2xl">
-              <i class="fas fa-vial"></i>
-            </div>
+            <div><p class="text-sm text-slate-500">Laudos Concluídos</p><p class="text-3xl font-bold text-emerald-600 mt-2" id="stat-concluidos">0</p></div>
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl"><i class="fas fa-check-circle"></i></div>
           </div>
         </div>
         <div class="card p-6">
           <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-slate-500">Bioquímicas</p>
-              <p class="text-3xl font-bold text-slate-800 mt-2" id="stat-bioquimicas">0</p>
-            </div>
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white text-2xl">
-              <i class="fas fa-flask"></i>
-            </div>
+            <div><p class="text-sm text-slate-500">Exames Cancelados</p><p class="text-3xl font-bold text-rose-600 mt-2" id="stat-cancelados">0</p></div>
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white text-2xl"><i class="fas fa-times-circle"></i></div>
           </div>
         </div>
       </div>
-
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-clock text-sky-500"></i> Últimos Pacientes
-          </h3>
-          <div id="ultimos-pacientes" class="space-y-3">
-            <p class="text-slate-400 text-sm">Nenhum paciente cadastrado ainda.</p>
-          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-clock text-sky-500"></i> Últimos Pacientes</h3>
+          <div id="ultimos-pacientes" class="space-y-3"></div>
         </div>
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-flask text-emerald-500"></i> Últimos Laudos
-          </h3>
-          <div id="ultimos-laudos" class="space-y-3">
-            <p class="text-slate-400 text-sm">Nenhum laudo emitido ainda.</p>
-          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-flask text-emerald-500"></i> Últimos Laudos</h3>
+          <div id="ultimos-laudos" class="space-y-3"></div>
         </div>
       </div>
     </section>
 
     <!-- GUIAS DE PACIENTE -->
     <section id="section-guias" class="hidden fade-in">
-      <div class="mb-8">
-        <h2 class="text-3xl font-bold text-slate-800">Guias de Paciente</h2>
-        <p class="text-slate-500 mt-1">Cadastro e gerenciamento de pacientes veterinários</p>
-      </div>
-
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Guias de Paciente</h2><p class="text-slate-500 mt-1">Cadastro e gerenciamento</p></div>
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="card p-6 lg:col-span-1">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-user-plus text-sky-500"></i> Novo Paciente
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-user-plus text-sky-500"></i> <span id="form-pac-title">Novo Paciente</span></h3>
           <form id="form-paciente" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Nome do Animal *</label>
-              <input type="text" id="pac-nome" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-            </div>
+            <input type="hidden" id="pac-edit-id">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Nome do Animal *</label><input type="text" id="pac-nome" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></div>
             <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Espécie *</label>
+              <div><label class="block text-sm font-medium text-slate-700 mb-1">Espécie *</label>
                 <select id="pac-especie" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-                  <option value="">Selecione</option>
-                  <option value="Canino">Canino</option>
-                  <option value="Felino">Felino</option>
-                  <option value="Ave">Ave</option>
-                  <option value="Roedor">Roedor</option>
-                  <option value="Réptil">Réptil</option>
-                  <option value="Outro">Outro</option>
+                  <option value="">Selecione</option><option value="Canino">Canino</option><option value="Felino">Felino</option><option value="Ave">Ave</option><option value="Roedor">Roedor</option><option value="Réptil">Réptil</option><option value="Outro">Outro</option>
                 </select>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Raça</label>
-                <input type="text" id="pac-raca" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              </div>
+              <div><label class="block text-sm font-medium text-slate-700 mb-1">Raça</label><input type="text" id="pac-raca" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></div>
             </div>
             <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Sexo *</label>
+              <div><label class="block text-sm font-medium text-slate-700 mb-1">Sexo *</label>
                 <select id="pac-sexo" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-                  <option value="">Selecione</option>
-                  <option value="Macho">Macho</option>
-                  <option value="Fêmea">Fêmea</option>
+                  <option value="">Selecione</option><option value="Macho">Macho</option><option value="Fêmea">Fêmea</option>
                 </select>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Idade</label>
-                <input type="text" id="pac-idade" placeholder="Ex: 3 anos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              </div>
+              <div><label class="block text-sm font-medium text-slate-700 mb-1">Idade</label><input type="text" id="pac-idade" placeholder="Ex: 3 anos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Peso (kg)</label>
-              <input type="number" step="0.1" id="pac-peso" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Peso (kg)</label><input type="number" step="0.1" id="pac-peso" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Tutor / Responsável *</label><input type="text" id="pac-tutor" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Telefone</label><input type="tel" id="pac-telefone" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Observações</label><textarea id="pac-obs" rows="2" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></textarea></div>
+            <div class="flex gap-2">
+              <button type="submit" class="btn-primary flex-1 py-3 rounded-lg text-white font-semibold"><i class="fas fa-save mr-2"></i> Salvar</button>
+              <button type="button" onclick="limparFormPaciente()" class="px-4 py-3 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition"><i class="fas fa-times"></i></button>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Tutor / Responsável *</label>
-              <input type="text" id="pac-tutor" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Telefone do Tutor</label>
-              <input type="tel" id="pac-telefone" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Observações</label>
-              <textarea id="pac-obs" rows="2" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"></textarea>
-            </div>
-            <button type="submit" class="btn-primary w-full py-3 rounded-lg text-white font-semibold">
-              <i class="fas fa-save mr-2"></i> Cadastrar Paciente
-            </button>
           </form>
         </div>
-
         <div class="card p-6 lg:col-span-2">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <i class="fas fa-list text-emerald-500"></i> Pacientes Cadastrados
-            </h3>
+            <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-list text-emerald-500"></i> Pacientes Cadastrados</h3>
             <input type="text" id="busca-paciente" placeholder="Buscar paciente..." class="input-field px-4 py-2 border border-slate-300 rounded-lg focus:outline-none w-64">
           </div>
-          <div id="lista-pacientes" class="space-y-3 max-h-[600px] overflow-y-auto">
-            <p class="text-slate-400 text-sm text-center py-8">Nenhum paciente cadastrado.</p>
-          </div>
+          <div id="lista-pacientes" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
         </div>
       </div>
     </section>
 
     <!-- LAUDOS -->
     <section id="section-laudos" class="hidden fade-in">
-      <div class="mb-8">
-        <h2 class="text-3xl font-bold text-slate-800">Laudos Veterinários</h2>
-        <p class="text-slate-500 mt-1">Emissão e consulta de laudos laboratoriais</p>
-      </div>
-
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Laudos Veterinários</h2><p class="text-slate-500 mt-1">Emissão e consulta</p></div>
       <div class="card p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <i class="fas fa-folder-open text-sky-500"></i> Laudos Emitidos
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-folder-open text-sky-500"></i> Laudos Emitidos</h3>
           <div class="flex gap-2">
-            <button onclick="showSection('hemograma')" class="btn-primary px-6 py-2 rounded-lg text-white font-semibold">
-              <i class="fas fa-vial mr-2"></i> Novo Hemograma
-            </button>
-            <button onclick="showSection('bioquimica')" class="px-6 py-2 rounded-lg bg-violet-500 text-white font-semibold hover:bg-violet-600 transition">
-              <i class="fas fa-flask mr-2"></i> Nova Bioquímica
-            </button>
+            <button onclick="showSection('hemograma')" class="btn-primary px-4 py-2 rounded-lg text-white font-semibold text-sm"><i class="fas fa-vial mr-2"></i>Novo Hemograma</button>
+            <button onclick="showSection('bioquimica')" class="px-4 py-2 rounded-lg bg-violet-500 text-white font-semibold hover:bg-violet-600 transition text-sm"><i class="fas fa-flask mr-2"></i>Nova Bioquímica</button>
+            <button onclick="showSection('urina')" class="px-4 py-2 rounded-lg bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition text-sm"><i class="fas fa-tint mr-2"></i>Nova Urina</button>
+            <button onclick="showSection('fezes')" class="px-4 py-2 rounded-lg bg-amber-600 text-white font-semibold hover:bg-amber-700 transition text-sm"><i class="fas fa-search mr-2"></i>Novo Fezes</button>
           </div>
         </div>
-        <div id="lista-laudos" class="space-y-3">
-          <p class="text-slate-400 text-sm text-center py-8">Nenhum laudo emitido ainda.</p>
-        </div>
+        <div id="lista-laudos" class="space-y-3"></div>
       </div>
     </section>
 
     <!-- HEMOGRAMA -->
     <section id="section-hemograma" class="hidden fade-in">
-      <div class="mb-8">
-        <h2 class="text-3xl font-bold text-slate-800">Hemograma Completo</h2>
-        <p class="text-slate-500 mt-1">Preencha os dados do hemograma do paciente</p>
-      </div>
-
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Hemograma Completo</h2></div>
       <div class="card p-6 mb-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <i class="fas fa-paw text-sky-500"></i> Selecionar Paciente
-        </h3>
-        <select id="hem-paciente" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-          <option value="">-- Selecione um paciente --</option>
-        </select>
+        <select id="hem-paciente" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"><option value="">-- Selecione um paciente --</option></select>
+        <input type="hidden" id="hem-edit-id">
       </div>
-
       <form id="form-hemograma" class="space-y-6">
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-circle text-rose-500"></i> Eritrograma (Série Vermelha)
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🔴 Eritrograma</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Hemácias (milhões/µL)</label>
-              <input type="number" step="0.01" id="hem-hemacias" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 5.5 - 8.5</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Hemoglobina (g/dL)</label>
-              <input type="number" step="0.1" id="hem-hemoglobina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 12.0 - 18.0</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Hematócrito (%)</label>
-              <input type="number" step="0.1" id="hem-hematocrito" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 37.0 - 55.0</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">VGM - Volume Globular Médio (fL)</label>
-              <input type="number" step="0.1" id="hem-vgm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 60.0 - 77.0</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">HCM - Hemoglobina Corpuscular Média (pg)</label>
-              <input type="number" step="0.1" id="hem-hcm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 19.5 - 24.5</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">CHCM (g/dL)</label>
-              <input type="number" step="0.1" id="hem-chcm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 32.0 - 36.0</p>
-            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Hemácias (milhões/µL)</label><input type="number" step="0.01" id="hem-hemacias" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 5.5 - 8.5</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Hemoglobina (g/dL)</label><input type="number" step="0.1" id="hem-hemoglobina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 12.0 - 18.0</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Hematócrito (%)</label><input type="number" step="0.1" id="hem-hematocrito" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 37.0 - 55.0</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">VGM (fL)</label><input type="number" step="0.1" id="hem-vgm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 60.0 - 77.0</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">HCM (pg)</label><input type="number" step="0.1" id="hem-hcm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 19.5 - 24.5</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">CHCM (g/dL)</label><input type="number" step="0.1" id="hem-chcm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 32.0 - 36.0</p></div>
           </div>
         </div>
-
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-shield-virus text-emerald-500"></i> Leucograma (Série Branca)
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🟢 Leucograma</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Leucócitos Totais (µL)</label>
-              <input type="number" step="1" id="hem-leucocitos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 6.000 - 17.000</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Bastonetes (%)</label>
-              <input type="number" step="0.1" id="hem-bastonetes" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 0 - 3</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Neutrófilos Segmentados (%)</label>
-              <input type="number" step="0.1" id="hem-neutrofilos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 60 - 77</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Eosinófilos (%)</label>
-              <input type="number" step="0.1" id="hem-eosinofilos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 2 - 10</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Basófilos (%)</label>
-              <input type="number" step="0.1" id="hem-basofilos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 0 - 1</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Linfócitos (%)</label>
-              <input type="number" step="0.1" id="hem-linfocitos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 12 - 30</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Monócitos (%)</label>
-              <input type="number" step="0.1" id="hem-monocitos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 3 - 10</p>
-            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Leucócitos Totais (µL)</label><input type="number" step="1" id="hem-leucocitos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 6.000 - 17.000</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Bastonetes (%)</label><input type="number" step="0.1" id="hem-bastonetes" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 0 - 3</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Neutrófilos Seg. (%)</label><input type="number" step="0.1" id="hem-neutrofilos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 60 - 77</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Eosinófilos (%)</label><input type="number" step="0.1" id="hem-eosinofilos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 2 - 10</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Linfócitos (%)</label><input type="number" step="0.1" id="hem-linfocitos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 12 - 30</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Monócitos (%)</label><input type="number" step="0.1" id="hem-monocitos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 3 - 10</p></div>
           </div>
         </div>
-
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-tint text-amber-500"></i> Plaquetas
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🟡 Plaquetas</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Plaquetas (µL)</label>
-              <input type="number" step="1000" id="hem-plaquetas" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 200.000 - 500.000</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">VPM - Volume Plaquetário Médio (fL)</label>
-              <input type="number" step="0.1" id="hem-vpm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 9.0 - 13.0</p>
-            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Plaquetas (µL)</label><input type="number" step="1000" id="hem-plaquetas" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 200.000 - 500.000</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">VPM (fL)</label><input type="number" step="0.1" id="hem-vpm" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 9.0 - 13.0</p></div>
           </div>
         </div>
-
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-comment-medical text-sky-500"></i> Observações e Diagnóstico
-          </h3>
-          <textarea id="hem-obs" rows="4" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none" placeholder="Descreva as observações do hemograma..."></textarea>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Observações</h3>
+          <textarea id="hem-obs" rows="3" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></textarea>
         </div>
-
         <div class="flex gap-3">
-          <button type="submit" class="btn-primary flex-1 py-3 rounded-lg text-white font-semibold">
-            <i class="fas fa-save mr-2"></i> Gerar Laudo de Hemograma
-          </button>
-          <button type="button" onclick="limparFormHemograma()" class="px-6 py-3 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition">
-            <i class="fas fa-eraser mr-2"></i> Limpar
-          </button>
+          <button type="submit" class="btn-primary flex-1 py-3 rounded-lg text-white font-semibold"><i class="fas fa-save mr-2"></i> Salvar Laudo</button>
+          <button type="button" onclick="limparFormHemograma()" class="px-6 py-3 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition">Limpar</button>
         </div>
       </form>
     </section>
 
     <!-- BIOQUÍMICA -->
     <section id="section-bioquimica" class="hidden fade-in">
-      <div class="mb-8">
-        <h2 class="text-3xl font-bold text-slate-800">Perfil Bioquímico</h2>
-        <p class="text-slate-500 mt-1">Análise bioquímica sérica - valores de referência veterinários</p>
-      </div>
-
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Perfil Bioquímico</h2></div>
       <div class="card p-6 mb-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <i class="fas fa-paw text-violet-500"></i> Selecionar Paciente
-        </h3>
-        <select id="bio-paciente" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-          <option value="">-- Selecione um paciente --</option>
-        </select>
-        <div class="mt-3 p-3 bg-violet-50 rounded-lg text-sm text-violet-800">
-          <i class="fas fa-info-circle mr-1"></i>
-          Valores de referência para cães adultos. Para gatos e outras espécies, considerar ajustes.
-        </div>
+        <select id="bio-paciente" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"><option value="">-- Selecione um paciente --</option></select>
+        <input type="hidden" id="bio-edit-id">
       </div>
-
       <form id="form-bioquimica" class="space-y-6">
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-kidneys text-rose-500"></i> Função Renal
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🔴 Função Renal</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Ureia (mg/dL)</label>
-              <input type="number" step="0.1" id="bio-ureia" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 10 - 60</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Creatinina (mg/dL)</label>
-              <input type="number" step="0.01" id="bio-creatinina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 0.5 - 1.8</p>
-            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Ureia (mg/dL)</label><input type="number" step="0.1" id="bio-ureia" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 10 - 60</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Creatinina (mg/dL)</label><input type="number" step="0.01" id="bio-creatinina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 0.5 - 1.8</p></div>
           </div>
         </div>
-
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-liver text-emerald-500"></i> Função Hepática
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🟢 Função Hepática</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">ALT / TGP (U/L)</label>
-              <input type="number" step="1" id="bio-alt" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 10 - 125</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">AST / TGO (U/L)</label>
-              <input type="number" step="1" id="bio-ast" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 10 - 50</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">FA (U/L)</label>
-              <input type="number" step="1" id="bio-fa" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 5 - 160</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">GGT (U/L)</label>
-              <input type="number" step="0.1" id="bio-ggt" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 0 - 15</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Bilirrubina Total (mg/dL)</label>
-              <input type="number" step="0.01" id="bio-bilirrubina-total" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 0 - 0.9</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Bilirrubina Direta (mg/dL)</label>
-              <input type="number" step="0.01" id="bio-bilirrubina-direta" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 0 - 0.3</p>
-            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">ALT / TGP (U/L)</label><input type="number" step="1" id="bio-alt" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 10 - 125</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">AST / TGO (U/L)</label><input type="number" step="1" id="bio-ast" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 10 - 50</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">FA (U/L)</label><input type="number" step="1" id="bio-fa" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 5 - 160</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Bilirrubina Total (mg/dL)</label><input type="number" step="0.01" id="bio-bilirrubina-total" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 0 - 0.9</p></div>
           </div>
         </div>
-
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-bolt text-amber-500"></i> Glicemia e Metabolismo
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🟡 Metabolismo e Lipídios</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Glicose (mg/dL)</label>
-              <input type="number" step="1" id="bio-glicose" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 70 - 143</p>
-            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Glicose (mg/dL)</label><input type="number" step="1" id="bio-glicose" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 70 - 143</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Colesterol Total (mg/dL)</label><input type="number" step="1" id="bio-colesterol" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 110 - 320</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Triglicerídeos (mg/dL)</label><input type="number" step="1" id="bio-triglicerides" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 26 - 160</p></div>
           </div>
         </div>
-
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-chart-bar text-orange-500"></i> Perfil Lipídico
-          </h3>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🔵 Proteínas e Minerais</h3>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Colesterol Total (mg/dL)</label>
-              <input type="number" step="1" id="bio-colesterol" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 110 - 320</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Triglicerídeos (mg/dL)</label>
-              <input type="number" step="1" id="bio-triglicerides" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 26 - 160</p>
-            </div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Proteínas Totais (g/dL)</label><input type="number" step="0.1" id="bio-proteinas-totais" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 5.2 - 8.2</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Albumina (g/dL)</label><input type="number" step="0.1" id="bio-albumina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 2.5 - 4.4</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Cálcio Total (mg/dL)</label><input type="number" step="0.1" id="bio-calcio" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 7.9 - 12.0</p></div>
           </div>
         </div>
-
         <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-weight-hanging text-sky-500"></i> Proteínas Séricas
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Proteínas Totais (g/dL)</label>
-              <input type="number" step="0.1" id="bio-proteinas-totais" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 5.2 - 8.2</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Albumina (g/dL)</label>
-              <input type="number" step="0.1" id="bio-albumina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 2.5 - 4.4</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Globulina (g/dL)</label>
-              <input type="number" step="0.1" id="bio-globulina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 2.4 - 4.5</p>
-            </div>
-          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Observações</h3>
+          <textarea id="bio-obs" rows="3" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></textarea>
         </div>
-
-        <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-atom text-indigo-500"></i> Minerais e Eletrólitos
-          </h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Cálcio Total (mg/dL)</label>
-              <input type="number" step="0.1" id="bio-calcio" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 7.9 - 12.0</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Fósforo (mg/dL)</label>
-              <input type="number" step="0.1" id="bio-fosforo" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 2.5 - 6.8</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Sódio (mEq/L)</label>
-              <input type="number" step="0.1" id="bio-sodio" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 136 - 148</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Potássio (mEq/L)</label>
-              <input type="number" step="0.01" id="bio-potassio" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 3.5 - 5.8</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Cloro (mEq/L)</label>
-              <input type="number" step="0.1" id="bio-cloro" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none">
-              <p class="text-xs text-slate-400 mt-1">Ref: 100 - 120</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="card p-6">
-          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <i class="fas fa-comment-medical text-violet-500"></i> Observações e Diagnóstico
-          </h3>
-          <textarea id="bio-obs" rows="4" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none" placeholder="Descreva as observações..."></textarea>
-        </div>
-
         <div class="flex gap-3">
-          <button type="submit" class="btn-primary flex-1 py-3 rounded-lg text-white font-semibold">
-            <i class="fas fa-save mr-2"></i> Gerar Laudo de Bioquímica
-          </button>
-          <button type="button" onclick="limparFormBioquimica()" class="px-6 py-3 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition">
-            <i class="fas fa-eraser mr-2"></i> Limpar
-          </button>
+          <button type="submit" class="btn-primary flex-1 py-3 rounded-lg text-white font-semibold"><i class="fas fa-save mr-2"></i> Salvar Laudo</button>
+          <button type="button" onclick="limparFormBioquimica()" class="px-6 py-3 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition">Limpar</button>
         </div>
       </form>
     </section>
 
+    <!-- URINA -->
+    <section id="section-urina" class="hidden fade-in">
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Exame de Urina (EAS)</h2></div>
+      <div class="card p-6 mb-6">
+        <select id="urina-paciente" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"><option value="">-- Selecione um paciente --</option></select>
+        <input type="hidden" id="urina-edit-id">
+      </div>
+      <form id="form-urina" class="space-y-6">
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🔴 Características Físicas</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Cor</label><input type="text" id="uri-cor" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Amarelo"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Aspecto</label><input type="text" id="uri-aspecto" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Límpido"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Densidade</label><input type="number" step="0.001" id="uri-densidade" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 1.015 - 1.045</p></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">pH</label><input type="number" step="0.1" id="uri-ph" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><p class="text-xs text-slate-400 mt-1">Ref: 5.5 - 7.0</p></div>
+          </div>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🟢 Exame Químico</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Proteína</label><select id="uri-proteina" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Negativo">Negativo</option><option value="Traços">Traços</option><option value="1+">1+</option><option value="2+">2+</option><option value="3+">3+</option></select></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Glicose</label><select id="uri-glicose" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Negativo">Negativo</option><option value="Traços">Traços</option><option value="1+">1+</option><option value="2+">2+</option></select></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Sangue Oculto</label><select id="uri-sangue" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Negativo">Negativo</option><option value="Positivo">Positivo</option></select></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Corpos Cetônicos</label><select id="uri-cetona" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Negativo">Negativo</option><option value="Positivo">Positivo</option></select></div>
+          </div>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🟡 Sedimentoscopia</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Leucócitos (/campo)</label><input type="text" id="uri-leucocitos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: 0-2"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Hemácias (/campo)</label><input type="text" id="uri-hemacias" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Raro"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Cristais</label><input type="text" id="uri-cristais" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Ausentes"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Bactérias</label><input type="text" id="uri-bacterias" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Ausentes"></div>
+          </div>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Observações</h3>
+          <textarea id="uri-obs" rows="3" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" class="btn-primary flex-1 py-3 rounded-lg text-white font-semibold"><i class="fas fa-save mr-2"></i> Salvar Laudo</button>
+          <button type="button" onclick="limparFormUrina()" class="px-6 py-3 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition">Limpar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- FEZES -->
+    <section id="section-fezes" class="hidden fade-in">
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Exame de Fezes</h2></div>
+      <div class="card p-6 mb-6">
+        <select id="fezes-paciente" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none"><option value="">-- Selecione um paciente --</option></select>
+        <input type="hidden" id="fezes-edit-id">
+      </div>
+      <form id="form-fezes" class="space-y-6">
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🔴 Exame Macroscópico</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Cor</label><input type="text" id="fez-cor" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Marrom"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Consistência</label><input type="text" id="fez-consistencia" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg" placeholder="Ex: Pastosa"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Muco</label><select id="fez-muco" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Ausente">Ausente</option><option value="Presente">Presente</option></select></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Sangue Visível</label><select id="fez-sangue" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Ausente">Ausente</option><option value="Presente">Presente</option></select></div>
+          </div>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">🟢 Exame Microscópico (Parasitológico)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Ovos de Helmintos</label><select id="fez-helmintos" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Não observado">Não observado</option><option value="Observado">Observado</option></select></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Cistos de Protozoários</label><select id="fez-protozoarios" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Não observado">Não observado</option><option value="Observado">Observado</option></select></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Leveduras</label><select id="fez-leveduras" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"><option value="Ausente">Ausente</option><option value="Presente">Presente</option></select></div>
+          </div>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4">Observações</h3>
+          <textarea id="fez-obs" rows="3" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></textarea>
+        </div>
+        <div class="flex gap-3">
+          <button type="submit" class="btn-primary flex-1 py-3 rounded-lg text-white font-semibold"><i class="fas fa-save mr-2"></i> Salvar Laudo</button>
+          <button type="button" onclick="limparFormFezes()" class="px-6 py-3 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition">Limpar</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- CONFIGURAÇÕES (Admin Only) -->
+    <section id="section-configuracoes" class="hidden fade-in">
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Configurações do Sistema</h2><p class="text-slate-500 mt-1">Acesso restrito ao Administrador</p></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-clinic-medical text-sky-500"></i> Dados da Clínica</h3>
+          <form id="form-config-clinica" class="space-y-4">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Nome da Clínica</label><input type="text" id="conf-nome" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Endereço</label><input type="text" id="conf-endereco" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Telefone</label><input type="text" id="conf-telefone" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Responsável Técnico (CRMV)</label><input type="text" id="conf-resp" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></div>
+            <button type="submit" class="btn-primary w-full py-3 rounded-lg text-white font-semibold"><i class="fas fa-save mr-2"></i> Salvar Configurações</button>
+          </form>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fas fa-users-cog text-emerald-500"></i> Gerenciar Usuários</h3>
+          <form id="form-usuario" class="space-y-4 mb-6">
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Nome de Usuário</label><input type="text" id="conf-user-nome" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Senha</label><input type="password" id="conf-user-senha" required class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg"></div>
+            <div><label class="block text-sm font-medium text-slate-700 mb-1">Perfil</label>
+              <select id="conf-user-role" class="input-field w-full px-4 py-2 border border-slate-300 rounded-lg">
+                <option value="vet">Veterinário</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary w-full py-3 rounded-lg text-white font-semibold"><i class="fas fa-user-plus mr-2"></i> Adicionar Usuário</button>
+          </form>
+          <div id="lista-usuarios" class="space-y-2"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- HISTÓRICO -->
     <section id="section-historico" class="hidden fade-in">
-      <div class="mb-8">
-        <h2 class="text-3xl font-bold text-slate-800">Histórico de Exames</h2>
-        <p class="text-slate-500 mt-1">Todos os exames realizados no laboratório</p>
-      </div>
-
+      <div class="mb-8"><h2 class="text-3xl font-bold text-slate-800">Histórico de Exames</h2></div>
       <div class="card p-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-            <i class="fas fa-archive text-emerald-500"></i> Registros
-          </h3>
-          <button onclick="exportarDados()" class="px-4 py-2 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition">
-            <i class="fas fa-download mr-2"></i> Exportar
-          </button>
+          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-archive text-emerald-500"></i> Registros</h3>
+          <button onclick="exportarDados()" class="px-4 py-2 rounded-lg bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition"><i class="fas fa-download mr-2"></i> Exportar Backup</button>
         </div>
-        <div id="lista-historico" class="space-y-3">
-          <p class="text-slate-400 text-sm text-center py-8">Nenhum registro encontrado.</p>
-        </div>
+        <div id="lista-historico" class="space-y-3"></div>
       </div>
     </section>
 
   </main>
 </div>
 
-<!-- Modal -->
+<!-- Modal Visualização/Edição Laudo -->
 <div id="modal-laudos" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-    <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-      <h3 class="text-lg font-bold text-slate-800">Visualização do Laudo</h3>
+    <div class="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
+      <h3 class="text-lg font-bold text-slate-800">Laudo</h3>
       <div class="flex gap-2">
-        <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 transition">
-          <i class="fas fa-print mr-2"></i> Imprimir
-        </button>
-        <button onclick="fecharModal()" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition">
-          <i class="fas fa-times"></i>
-        </button>
+        <button onclick="baixarPDF()" class="px-4 py-2 rounded-lg bg-rose-500 text-white font-semibold hover:bg-rose-600 transition"><i class="fas fa-file-pdf mr-2"></i> PDF</button>
+        <button onclick="fecharModal()" class="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 font-semibold hover:bg-slate-300 transition"><i class="fas fa-times"></i></button>
       </div>
     </div>
     <div id="conteudo-laudos" class="p-8"></div>
@@ -676,915 +501,569 @@
 </div>
 
 <script>
-// ============ ESTADO DA APLICAÇÃO ============
+// ============ ESTADO GLOBAL ============
 let pacientes = [];
 let laudos = [];
+let usuarios = [];
+let configuracoes = { nome: 'TG Vet Diagnósticos', endereco: 'Rua dos Animais, 123', telefone: '(11) 99999-9999', resp: 'Dr. Veterinário - CRMV-XX 00000' };
+let currentUser = null;
 let storageAvailable = true;
 
-// ============ VERIFICAÇÃO DE STORAGE ============
+// ============ INICIALIZAÇÃO E AUTH ============
 function verificarStorage() {
-  try {
-    const test = '__test__';
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
-    return true;
-  } catch (e) {
-    return false;
-  }
+  try { localStorage.setItem('__test__', '1'); localStorage.removeItem('__test__'); return true; } catch (e) { return false; }
 }
 
 function carregarDados() {
+  storageAvailable = verificarStorage();
+  if (!storageAvailable) { showToast('localStorage indisponível.', 'error'); return; }
   try {
-    storageAvailable = verificarStorage();
-    if (!storageAvailable) {
-      showToast('localStorage indisponível. Os dados não serão salvos permanentemente.', 'error');
-      return;
+    pacientes = JSON.parse(localStorage.getItem('tgv_pacientes') || '[]');
+    laudos = JSON.parse(localStorage.getItem('tgv_laudos') || '[]');
+    usuarios = JSON.parse(localStorage.getItem('tgv_usuarios') || '[]');
+    configuracoes = JSON.parse(localStorage.getItem('tgv_config') || JSON.stringify(configuracoes));
+    
+    if (usuarios.length === 0) {
+      usuarios = [
+        { id: 1, username: 'admin', password: 'admin123', role: 'admin', nome: 'Administrador' },
+        { id: 2, username: 'vet', password: 'vet123', role: 'vet', nome: 'Dr. Veterinário' }
+      ];
+      salvarDados();
     }
-    
-    const pacStorage = localStorage.getItem('tgv_pacientes');
-    const lauStorage = localStorage.getItem('tgv_laudos');
-    
-    pacientes = pacStorage ? JSON.parse(pacStorage) : [];
-    laudos = lauStorage ? JSON.parse(lauStorage) : [];
-    
-    console.log('Dados carregados:', { pacientes: pacientes.length, laudos: laudos.length });
-  } catch (e) {
-    console.error('Erro ao carregar dados:', e);
-    showToast('Erro ao carregar dados do armazenamento.', 'error');
-    pacientes = [];
-    laudos = [];
-  }
+  } catch (e) { console.error(e); showToast('Erro ao carregar dados.', 'error'); }
 }
 
 function salvarDados() {
+  if (!storageAvailable) return false;
   try {
-    if (!storageAvailable) {
-      console.warn('Storage indisponível - dados apenas em memória');
-      return false;
-    }
-    
     localStorage.setItem('tgv_pacientes', JSON.stringify(pacientes));
     localStorage.setItem('tgv_laudos', JSON.stringify(laudos));
-    
-    console.log('Dados salvos com sucesso:', { pacientes: pacientes.length, laudos: laudos.length });
+    localStorage.setItem('tgv_usuarios', JSON.stringify(usuarios));
+    localStorage.setItem('tgv_config', JSON.stringify(configuracoes));
     return true;
-  } catch (e) {
-    console.error('Erro ao salvar dados:', e);
-    showToast('Erro ao salvar dados. Verifique o armazenamento do navegador.', 'error');
-    return false;
+  } catch (e) { showToast('Erro ao salvar.', 'error'); return false; }
+}
+
+function checkAuth() {
+  const session = sessionStorage.getItem('tgv_session');
+  if (session) {
+    currentUser = JSON.parse(session);
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app-container').classList.remove('hidden');
+    aplicarPermissoes();
+    atualizarDashboard();
   }
 }
 
-// ============ TOAST NOTIFICATIONS ============
-function showToast(message, type = 'info') {
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>${message}`;
-  document.body.appendChild(toast);
+document.getElementById('form-login').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const user = document.getElementById('login-user').value;
+  const pass = document.getElementById('login-pass').value;
+  const found = usuarios.find(u => u.username === user && u.password === pass);
   
-  setTimeout(() => {
-    toast.style.animation = 'slideIn 0.3s ease reverse';
-    setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  if (found) {
+    currentUser = found;
+    sessionStorage.setItem('tgv_session', JSON.stringify(found));
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app-container').classList.remove('hidden');
+    aplicarPermissoes();
+    atualizarDashboard();
+    showToast(`Bem-vindo, ${found.nome}!`, 'success');
+  } else {
+    showToast('Usuário ou senha inválidos.', 'error');
+  }
+});
+
+function logout() {
+  sessionStorage.removeItem('tgv_session');
+  currentUser = null;
+  document.getElementById('app-container').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('form-login').reset();
+}
+
+function aplicarPermissoes() {
+  document.getElementById('user-name-display').textContent = currentUser.nome;
+  document.getElementById('user-role-display').textContent = currentUser.role === 'admin' ? 'Administrador' : 'Veterinário';
+  document.getElementById('user-avatar').textContent = currentUser.nome.charAt(0);
+  document.getElementById('sidebar-clinic-name').textContent = configuracoes.nome;
+  
+  if (currentUser.role === 'admin') {
+    document.getElementById('admin-menu').classList.remove('hidden');
+  } else {
+    document.getElementById('admin-menu').classList.add('hidden');
+  }
 }
 
 // ============ NAVEGAÇÃO ============
 function showSection(sectionId) {
-  try {
-    document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-    document.getElementById('section-' + sectionId).classList.remove('hidden');
-    
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
-    
-    if (sectionId === 'dashboard') atualizarDashboard();
-    if (sectionId === 'guias') renderizarPacientes();
-    if (sectionId === 'laudos') renderizarLaudos();
-    if (sectionId === 'hemograma') atualizarSelectPacientes('hem-paciente');
-    if (sectionId === 'bioquimica') atualizarSelectPacientes('bio-paciente');
-    if (sectionId === 'historico') renderizarHistorico();
-  } catch (e) {
-    console.error('Erro ao navegar:', e);
-    showToast('Erro ao navegar para a seção.', 'error');
+  document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('section-' + sectionId).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navBtn = document.querySelector(`[data-section="${sectionId}"]`);
+  if (navBtn) navBtn.classList.add('active');
+  
+  if (sectionId === 'dashboard') atualizarDashboard();
+  if (sectionId === 'guias') renderizarPacientes();
+  if (sectionId === 'laudos') renderizarLaudos();
+  if (sectionId === 'historico') renderizarHistorico();
+  if (sectionId === 'configuracoes') renderizarConfiguracoes();
+  
+  // Atualiza selects de paciente
+  if (['hemograma', 'bioquimica', 'urina', 'fezes'].includes(sectionId)) {
+    atualizarSelectPacientes(sectionId + '-paciente');
   }
 }
 
 // ============ DASHBOARD ============
 function atualizarDashboard() {
-  document.getElementById('stat-pacientes').textContent = pacientes.length;
-  document.getElementById('stat-laudos').textContent = laudos.length;
-  document.getElementById('stat-hemogramas').textContent = laudos.filter(l => l.tipo === 'Hemograma').length;
-  document.getElementById('stat-bioquimicas').textContent = laudos.filter(l => l.tipo === 'Bioquímica').length;
+  document.getElementById('stat-total').textContent = laudos.length;
+  document.getElementById('stat-pendentes').textContent = laudos.filter(l => l.status === 'pendente').length;
+  document.getElementById('stat-concluidos').textContent = laudos.filter(l => l.status === 'concluido').length;
+  document.getElementById('stat-cancelados').textContent = laudos.filter(l => l.status === 'cancelado').length;
   
   const ultPac = document.getElementById('ultimos-pacientes');
-  if (pacientes.length === 0) {
-    ultPac.innerHTML = '<p class="text-slate-400 text-sm">Nenhum paciente cadastrado ainda.</p>';
-  } else {
-    ultPac.innerHTML = pacientes.slice(-5).reverse().map(p => `
+  ultPac.innerHTML = pacientes.length === 0 ? '<p class="text-slate-400 text-sm">Nenhum paciente.</p>' : 
+    pacientes.slice(-5).reverse().map(p => `
       <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold">
-          ${p.nome.charAt(0)}
-        </div>
-        <div class="flex-1">
-          <p class="font-semibold text-slate-800">${p.nome}</p>
-          <p class="text-xs text-slate-500">${p.especie} • ${p.raca || 'SRD'} • Tutor: ${p.tutor}</p>
-        </div>
-      </div>
-    `).join('');
-  }
-  
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold">${p.nome.charAt(0)}</div>
+        <div class="flex-1"><p class="font-semibold text-slate-800">${p.nome}</p><p class="text-xs text-slate-500">${p.especie} • Tutor: ${p.tutor}</p></div>
+      </div>`).join('');
+      
   const ultLaud = document.getElementById('ultimos-laudos');
-  if (laudos.length === 0) {
-    ultLaud.innerHTML = '<p class="text-slate-400 text-sm">Nenhum laudo emitido ainda.</p>';
-  } else {
-    ultLaud.innerHTML = laudos.slice(-5).reverse().map(l => `
+  ultLaud.innerHTML = laudos.length === 0 ? '<p class="text-slate-400 text-sm">Nenhum laudo.</p>' :
+    laudos.slice(-5).reverse().map(l => `
       <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-        <div class="w-10 h-10 rounded-full bg-gradient-to-br ${l.tipo === 'Hemograma' ? 'from-rose-400 to-rose-600' : 'from-violet-400 to-violet-600'} flex items-center justify-center text-white">
-          <i class="fas ${l.tipo === 'Hemograma' ? 'fa-vial' : 'fa-flask'}"></i>
-        </div>
-        <div class="flex-1">
-          <p class="font-semibold text-slate-800">${l.tipo} - ${l.pacienteNome}</p>
-          <p class="text-xs text-slate-500">${l.data}</p>
-        </div>
-      </div>
-    `).join('');
-  }
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white"><i class="fas fa-file-medical"></i></div>
+        <div class="flex-1"><p class="font-semibold text-slate-800">${l.tipo} - ${l.pacienteNome}</p><p class="text-xs text-slate-500">${l.data} • <span class="font-semibold ${l.status === 'concluido' ? 'text-emerald-600' : l.status === 'pendente' ? 'text-amber-600' : 'text-rose-600'}">${l.status.toUpperCase()}</span></p></div>
+      </div>`).join('');
 }
 
-// ============ PACIENTES ============
+// ============ PACIENTES (CRUD com Edição) ============
 document.getElementById('form-paciente').addEventListener('submit', function(e) {
   e.preventDefault();
+  const editId = document.getElementById('pac-edit-id').value;
+  const dados = {
+    nome: document.getElementById('pac-nome').value.trim(),
+    especie: document.getElementById('pac-especie').value,
+    raca: document.getElementById('pac-raca').value.trim(),
+    sexo: document.getElementById('pac-sexo').value,
+    idade: document.getElementById('pac-idade').value.trim(),
+    peso: document.getElementById('pac-peso').value,
+    tutor: document.getElementById('pac-tutor').value.trim(),
+    telefone: document.getElementById('pac-telefone').value.trim(),
+    observacoes: document.getElementById('pac-obs').value.trim(),
+    dataCadastro: new Date().toLocaleDateString('pt-BR')
+  };
   
-  try {
-    const paciente = {
-      id: Date.now() + Math.random(),
-      nome: document.getElementById('pac-nome').value.trim(),
-      especie: document.getElementById('pac-especie').value,
-      raca: document.getElementById('pac-raca').value.trim(),
-      sexo: document.getElementById('pac-sexo').value,
-      idade: document.getElementById('pac-idade').value.trim(),
-      peso: document.getElementById('pac-peso').value,
-      tutor: document.getElementById('pac-tutor').value.trim(),
-      telefone: document.getElementById('pac-telefone').value.trim(),
-      observacoes: document.getElementById('pac-obs').value.trim(),
-      dataCadastro: new Date().toLocaleDateString('pt-BR')
-    };
-    
-    if (!paciente.nome || !paciente.especie || !paciente.sexo || !paciente.tutor) {
-      showToast('Preencha todos os campos obrigatórios!', 'error');
-      return;
-    }
-    
-    pacientes.push(paciente);
-    
-    if (salvarDados()) {
-      showToast('Paciente cadastrado com sucesso!', 'success');
-      renderizarPacientes();
-      this.reset();
-    } else {
-      pacientes.pop();
-      showToast('Erro ao salvar paciente.', 'error');
-    }
-  } catch (e) {
-    console.error('Erro ao cadastrar paciente:', e);
-    showToast('Erro ao cadastrar paciente.', 'error');
+  if (editId) {
+    const idx = pacientes.findIndex(p => p.id == editId);
+    if (idx !== -1) { pacientes[idx] = { ...pacientes[idx], ...dados }; showToast('Paciente atualizado!', 'success'); }
+  } else {
+    dados.id = Date.now() + Math.random();
+    pacientes.push(dados);
+    showToast('Paciente cadastrado!', 'success');
   }
+  salvarDados(); renderizarPacientes(); limparFormPaciente();
 });
 
 function renderizarPacientes() {
-  const lista = document.getElementById('lista-pacientes');
   const busca = document.getElementById('busca-paciente').value.toLowerCase();
-  const filtrados = pacientes.filter(p => 
-    p.nome.toLowerCase().includes(busca) || 
-    p.tutor.toLowerCase().includes(busca) ||
-    p.especie.toLowerCase().includes(busca)
-  );
+  const filtrados = pacientes.filter(p => p.nome.toLowerCase().includes(busca) || p.tutor.toLowerCase().includes(busca));
+  const lista = document.getElementById('lista-pacientes');
   
-  if (filtrados.length === 0) {
-    lista.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">Nenhum paciente encontrado.</p>';
-    return;
-  }
+  if (filtrados.length === 0) { lista.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">Nenhum paciente encontrado.</p>'; return; }
   
   lista.innerHTML = filtrados.map(p => `
     <div class="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition">
       <div class="flex items-start justify-between">
         <div class="flex items-start gap-3">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-lg">
-            ${p.nome.charAt(0)}
-          </div>
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-lg">${p.nome.charAt(0)}</div>
           <div>
             <h4 class="font-bold text-slate-800">${p.nome}</h4>
-            <p class="text-sm text-slate-500">${p.especie} • ${p.raca || 'SRD'} • ${p.sexo}</p>
-            <p class="text-sm text-slate-500">Idade: ${p.idade || 'N/I'} • Peso: ${p.peso ? p.peso + ' kg' : 'N/I'}</p>
-            <p class="text-sm text-slate-600 mt-1"><i class="fas fa-user mr-1"></i> ${p.tutor}</p>
-            ${p.telefone ? `<p class="text-sm text-slate-600"><i class="fas fa-phone mr-1"></i> ${p.telefone}</p>` : ''}
+            <p class="text-sm text-slate-500">${p.especie} • ${p.raca || 'SRD'} • ${p.sexo} • ${p.idade || 'N/I'}</p>
+            <p class="text-sm text-slate-600"><i class="fas fa-user mr-1"></i> ${p.tutor} ${p.telefone ? '• ' + p.telefone : ''}</p>
           </div>
         </div>
         <div class="flex gap-2">
-          <button onclick="novoLaudoRapido(${p.id}, 'hemograma')" class="px-3 py-1 rounded-lg bg-rose-500 text-white text-sm hover:bg-rose-600 transition" title="Novo Hemograma">
-            <i class="fas fa-vial"></i>
-          </button>
-          <button onclick="novoLaudoRapido(${p.id}, 'bioquimica')" class="px-3 py-1 rounded-lg bg-violet-500 text-white text-sm hover:bg-violet-600 transition" title="Nova Bioquímica">
-            <i class="fas fa-flask"></i>
-          </button>
-          <button onclick="excluirPaciente(${p.id})" class="px-3 py-1 rounded-lg bg-slate-200 text-slate-700 text-sm hover:bg-slate-300 transition">
-            <i class="fas fa-trash"></i>
-          </button>
+          <button onclick="editarPaciente(${p.id})" class="px-3 py-1 rounded-lg bg-sky-500 text-white text-sm hover:bg-sky-600 transition" title="Editar"><i class="fas fa-edit"></i></button>
+          <button onclick="novoLaudoRapido(${p.id}, 'hemograma')" class="px-3 py-1 rounded-lg bg-rose-500 text-white text-sm hover:bg-rose-600 transition" title="Hemograma"><i class="fas fa-vial"></i></button>
+          <button onclick="excluirPaciente(${p.id})" class="px-3 py-1 rounded-lg bg-slate-200 text-slate-700 text-sm hover:bg-slate-300 transition" title="Excluir"><i class="fas fa-trash"></i></button>
         </div>
       </div>
-      ${p.observacoes ? `<div class="mt-3 pt-3 border-t border-slate-200 text-sm text-slate-600"><i class="fas fa-comment mr-1"></i> ${p.observacoes}</div>` : ''}
-    </div>
-  `).join('');
+    </div>`).join('');
 }
-
 document.getElementById('busca-paciente').addEventListener('input', renderizarPacientes);
 
+function editarPaciente(id) {
+  const p = pacientes.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('pac-edit-id').value = p.id;
+  document.getElementById('pac-nome').value = p.nome;
+  document.getElementById('pac-especie').value = p.especie;
+  document.getElementById('pac-raca').value = p.raca;
+  document.getElementById('pac-sexo').value = p.sexo;
+  document.getElementById('pac-idade').value = p.idade;
+  document.getElementById('pac-peso').value = p.peso;
+  document.getElementById('pac-tutor').value = p.tutor;
+  document.getElementById('pac-telefone').value = p.telefone;
+  document.getElementById('pac-obs').value = p.observacoes;
+  document.getElementById('form-pac-title').textContent = 'Editar Paciente';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function limparFormPaciente() {
+  document.getElementById('form-paciente').reset();
+  document.getElementById('pac-edit-id').value = '';
+  document.getElementById('form-pac-title').textContent = 'Novo Paciente';
+}
+
 function excluirPaciente(id) {
-  if (confirm('Deseja realmente excluir este paciente?')) {
+  if (confirm('Excluir este paciente?')) {
     pacientes = pacientes.filter(p => p.id !== id);
-    salvarDados();
-    renderizarPacientes();
-    showToast('Paciente excluído.', 'info');
+    salvarDados(); renderizarPacientes(); showToast('Paciente excluído.', 'info');
   }
 }
 
 function novoLaudoRapido(id, tipo) {
   showSection(tipo);
-  setTimeout(() => {
-    const selectId = tipo === 'hemograma' ? 'hem-paciente' : 'bio-paciente';
-    document.getElementById(selectId).value = id;
-  }, 100);
+  setTimeout(() => { document.getElementById(tipo + '-paciente').value = id; }, 100);
 }
 
-// ============ SELECT DE PACIENTES ============
 function atualizarSelectPacientes(selectId) {
   const select = document.getElementById(selectId);
   select.innerHTML = '<option value="">-- Selecione um paciente --</option>';
-  pacientes.forEach(p => {
-    select.innerHTML += `<option value="${p.id}">${p.nome} - ${p.especie} (${p.tutor})</option>`;
+  pacientes.forEach(p => { select.innerHTML += `<option value="${p.id}">${p.nome} - ${p.especie} (${p.tutor})</option>`; });
+}
+
+// ============ LAUDOS (CRUD com Edição e Status) ============
+function salvarLaudo(tipo, formId, pacienteSelectId, editIdField, camposArray) {
+  const pacienteId = document.getElementById(pacienteSelectId).value;
+  if (!pacienteId) { showToast('Selecione um paciente!', 'error'); return; }
+  const paciente = pacientes.find(p => p.id == pacienteId);
+  
+  const dados = {};
+  camposArray.forEach(c => {
+    const el = document.getElementById(c);
+    dados[c.replace(tipo === 'hemograma' ? 'hem-' : tipo === 'bioquimica' ? 'bio-' : tipo === 'urina' ? 'uri-' : 'fez-', '')] = el ? (el.value || (el.tagName === 'SELECT' ? el.options[el.selectedIndex].text : '')) : '';
   });
+  dados.observacoes = document.getElementById(tipo === 'hemograma' ? 'hem-obs' : tipo === 'bioquimica' ? 'bio-obs' : tipo === 'urina' ? 'uri-obs' : 'fez-obs').value.trim();
+  
+  const editId = document.getElementById(editIdField).value;
+  const laudoBase = {
+    tipo: tipo === 'hemograma' ? 'Hemograma' : tipo === 'bioquimica' ? 'Bioquímica' : tipo === 'urina' ? 'Exame de Urina' : 'Exame de Fezes',
+    pacienteId: paciente.id, pacienteNome: paciente.nome, especie: paciente.especie, raca: paciente.raca,
+    sexo: paciente.sexo, idade: paciente.idade, peso: paciente.peso, tutor: paciente.tutor, telefone: paciente.telefone,
+    data: new Date().toLocaleDateString('pt-BR'), dataCompleta: new Date().toLocaleString('pt-BR')
+  };
+
+  if (editId) {
+    const idx = laudos.findIndex(l => l.id == editId);
+    if (idx !== -1) { laudos[idx] = { ...laudos[idx], dados }; showToast('Laudo atualizado!', 'success'); }
+  } else {
+    laudos.push({ id: Date.now() + Math.random(), status: 'pendente', dados, ...laudoBase });
+    showToast('Laudo cadastrado como Pendente!', 'success');
+  }
+  
+  salvarDados(); 
+  limparForm(tipo);
+  showSection('laudos');
 }
 
-// ============ HEMOGRAMA ============
-document.getElementById('form-hemograma').addEventListener('submit', function(e) {
+function limparForm(tipo) {
+  document.getElementById('form-' + tipo).reset();
+  document.getElementById(tipo === 'hemograma' ? 'hem-edit-id' : tipo === 'bioquimica' ? 'bio-edit-id' : tipo === 'urina' ? 'urina-edit-id' : 'fezes-edit-id').value = '';
+  if(tipo === 'hemograma') document.getElementById('hem-paciente').value = '';
+  if(tipo === 'bioquimica') document.getElementById('bio-paciente').value = '';
+  if(tipo === 'urina') document.getElementById('urina-paciente').value = '';
+  if(tipo === 'fezes') document.getElementById('fezes-paciente').value = '';
+}
+function limparFormHemograma() { limparForm('hemograma'); }
+function limparFormBioquimica() { limparForm('bioquimica'); }
+function limparFormUrina() { limparForm('urina'); }
+function limparFormFezes() { limparForm('fezes'); }
+
+document.getElementById('form-hemograma').addEventListener('submit', e => {
   e.preventDefault();
-  
-  try {
-    const pacienteId = document.getElementById('hem-paciente').value;
-    if (!pacienteId) {
-      showToast('Selecione um paciente!', 'error');
-      return;
-    }
-    
-    const paciente = pacientes.find(p => p.id == pacienteId);
-    if (!paciente) {
-      showToast('Paciente não encontrado!', 'error');
-      return;
-    }
-    
-    const dados = {
-      hemacias: parseFloat(document.getElementById('hem-hemacias').value) || 0,
-      hemoglobina: parseFloat(document.getElementById('hem-hemoglobina').value) || 0,
-      hematocrito: parseFloat(document.getElementById('hem-hematocrito').value) || 0,
-      vgm: parseFloat(document.getElementById('hem-vgm').value) || 0,
-      hcm: parseFloat(document.getElementById('hem-hcm').value) || 0,
-      chcm: parseFloat(document.getElementById('hem-chcm').value) || 0,
-      leucocitos: parseFloat(document.getElementById('hem-leucocitos').value) || 0,
-      bastonetes: parseFloat(document.getElementById('hem-bastonetes').value) || 0,
-      neutrofilos: parseFloat(document.getElementById('hem-neutrofilos').value) || 0,
-      eosinofilos: parseFloat(document.getElementById('hem-eosinofilos').value) || 0,
-      basofilos: parseFloat(document.getElementById('hem-basofilos').value) || 0,
-      linfocitos: parseFloat(document.getElementById('hem-linfocitos').value) || 0,
-      monocitos: parseFloat(document.getElementById('hem-monocitos').value) || 0,
-      plaquetas: parseFloat(document.getElementById('hem-plaquetas').value) || 0,
-      vpm: parseFloat(document.getElementById('hem-vpm').value) || 0,
-      observacoes: document.getElementById('hem-obs').value.trim()
-    };
-    
-    const laudo = {
-      id: Date.now() + Math.random(),
-      tipo: 'Hemograma',
-      pacienteId: paciente.id,
-      pacienteNome: paciente.nome,
-      especie: paciente.especie,
-      raca: paciente.raca,
-      sexo: paciente.sexo,
-      idade: paciente.idade,
-      peso: paciente.peso,
-      tutor: paciente.tutor,
-      telefone: paciente.telefone,
-      dados: dados,
-      data: new Date().toLocaleDateString('pt-BR'),
-      dataCompleta: new Date().toLocaleString('pt-BR')
-    };
-    
-    laudos.push(laudo);
-    
-    if (salvarDados()) {
-      showToast('Laudo de hemograma gerado com sucesso!', 'success');
-      limparFormHemograma();
-      showSection('laudos');
-    } else {
-      laudos.pop();
-      showToast('Erro ao salvar laudo.', 'error');
-    }
-  } catch (e) {
-    console.error('Erro ao gerar laudo:', e);
-    showToast('Erro ao gerar laudo.', 'error');
-  }
+  salvarLaudo('hemograma', 'form-hemograma', 'hem-paciente', 'hem-edit-id', 
+    ['hem-hemacias','hem-hemoglobina','hem-hematocrito','hem-vgm','hem-hcm','hem-chcm','hem-leucocitos','hem-bastonetes','hem-neutrofilos','hem-eosinofilos','hem-linfocitos','hem-monocitos','hem-plaquetas','hem-vpm']);
 });
 
-function limparFormHemograma() {
-  document.getElementById('form-hemograma').reset();
-  document.getElementById('hem-paciente').value = '';
-}
-
-// ============ BIOQUÍMICA ============
-const camposBioquimica = [
-  { key: 'ureia', label: 'Ureia', unit: 'mg/dL', min: 10, max: 60, grupo: 'renal' },
-  { key: 'creatinina', label: 'Creatinina', unit: 'mg/dL', min: 0.5, max: 1.8, grupo: 'renal' },
-  { key: 'alt', label: 'ALT / TGP', unit: 'U/L', min: 10, max: 125, grupo: 'hepatica' },
-  { key: 'ast', label: 'AST / TGO', unit: 'U/L', min: 10, max: 50, grupo: 'hepatica' },
-  { key: 'fa', label: 'FA', unit: 'U/L', min: 5, max: 160, grupo: 'hepatica' },
-  { key: 'ggt', label: 'GGT', unit: 'U/L', min: 0, max: 15, grupo: 'hepatica' },
-  { key: 'bilirrubina-total', label: 'Bilirrubina Total', unit: 'mg/dL', min: 0, max: 0.9, grupo: 'hepatica' },
-  { key: 'bilirrubina-direta', label: 'Bilirrubina Direta', unit: 'mg/dL', min: 0, max: 0.3, grupo: 'hepatica' },
-  { key: 'glicose', label: 'Glicose', unit: 'mg/dL', min: 70, max: 143, grupo: 'metabolismo' },
-  { key: 'colesterol', label: 'Colesterol Total', unit: 'mg/dL', min: 110, max: 320, grupo: 'lipidico' },
-  { key: 'triglicerides', label: 'Triglicerídeos', unit: 'mg/dL', min: 26, max: 160, grupo: 'lipidico' },
-  { key: 'proteinas-totais', label: 'Proteínas Totais', unit: 'g/dL', min: 5.2, max: 8.2, grupo: 'proteinas' },
-  { key: 'albumina', label: 'Albumina', unit: 'g/dL', min: 2.5, max: 4.4, grupo: 'proteinas' },
-  { key: 'globulina', label: 'Globulina', unit: 'g/dL', min: 2.4, max: 4.5, grupo: 'proteinas' },
-  { key: 'calcio', label: 'Cálcio Total', unit: 'mg/dL', min: 7.9, max: 12.0, grupo: 'minerais' },
-  { key: 'fosforo', label: 'Fósforo', unit: 'mg/dL', min: 2.5, max: 6.8, grupo: 'minerais' },
-  { key: 'sodio', label: 'Sódio', unit: 'mEq/L', min: 136, max: 148, grupo: 'minerais' },
-  { key: 'potassio', label: 'Potássio', unit: 'mEq/L', min: 3.5, max: 5.8, grupo: 'minerais' },
-  { key: 'cloro', label: 'Cloro', unit: 'mEq/L', min: 100, max: 120, grupo: 'minerais' }
-];
-
-document.getElementById('form-bioquimica').addEventListener('submit', function(e) {
+document.getElementById('form-bioquimica').addEventListener('submit', e => {
   e.preventDefault();
-  
-  try {
-    const pacienteId = document.getElementById('bio-paciente').value;
-    if (!pacienteId) {
-      showToast('Selecione um paciente!', 'error');
-      return;
-    }
-    
-    const paciente = pacientes.find(p => p.id == pacienteId);
-    if (!paciente) {
-      showToast('Paciente não encontrado!', 'error');
-      return;
-    }
-    
-    const dados = {};
-    camposBioquimica.forEach(c => {
-      const el = document.getElementById('bio-' + c.key);
-      dados[c.key] = el ? (parseFloat(el.value) || 0) : 0;
-    });
-    dados.observacoes = document.getElementById('bio-obs').value.trim();
-    
-    const laudo = {
-      id: Date.now() + Math.random(),
-      tipo: 'Bioquímica',
-      pacienteId: paciente.id,
-      pacienteNome: paciente.nome,
-      especie: paciente.especie,
-      raca: paciente.raca,
-      sexo: paciente.sexo,
-      idade: paciente.idade,
-      peso: paciente.peso,
-      tutor: paciente.tutor,
-      telefone: paciente.telefone,
-      dados: dados,
-      data: new Date().toLocaleDateString('pt-BR'),
-      dataCompleta: new Date().toLocaleString('pt-BR')
-    };
-    
-    laudos.push(laudo);
-    
-    if (salvarDados()) {
-      showToast('Laudo de bioquímica gerado com sucesso!', 'success');
-      limparFormBioquimica();
-      showSection('laudos');
-    } else {
-      laudos.pop();
-      showToast('Erro ao salvar laudo.', 'error');
-    }
-  } catch (e) {
-    console.error('Erro ao gerar laudo:', e);
-    showToast('Erro ao gerar laudo.', 'error');
-  }
+  salvarLaudo('bioquimica', 'form-bioquimica', 'bio-paciente', 'bio-edit-id',
+    ['bio-ureia','bio-creatinina','bio-alt','bio-ast','bio-fa','bio-bilirrubina-total','bio-glicose','bio-colesterol','bio-triglicerides','bio-proteinas-totais','bio-albumina','bio-calcio']);
 });
 
-function limparFormBioquimica() {
-  document.getElementById('form-bioquimica').reset();
-  document.getElementById('bio-paciente').value = '';
-}
+document.getElementById('form-urina').addEventListener('submit', e => {
+  e.preventDefault();
+  salvarLaudo('urina', 'form-urina', 'urina-paciente', 'urina-edit-id',
+    ['uri-cor','uri-aspecto','uri-densidade','uri-ph','uri-proteina','uri-glicose','uri-sangue','uri-cetona','uri-leucocitos','uri-hemacias','uri-cristais','uri-bacterias']);
+});
 
-// ============ LAUDOS ============
+document.getElementById('form-fezes').addEventListener('submit', e => {
+  e.preventDefault();
+  salvarLaudo('fezes', 'form-fezes', 'fezes-paciente', 'fezes-edit-id',
+    ['fez-cor','fez-consistencia','fez-muco','fez-sangue','fez-helmintos','fez-protozoarios','fez-leveduras']);
+});
+
 function renderizarLaudos() {
   const lista = document.getElementById('lista-laudos');
-  if (laudos.length === 0) {
-    lista.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">Nenhum laudo emitido ainda.</p>';
-    return;
-  }
+  if (laudos.length === 0) { lista.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">Nenhum laudo.</p>'; return; }
   
   lista.innerHTML = laudos.slice().reverse().map(l => {
-    const iconClass = l.tipo === 'Hemograma' ? 'fa-vial' : 'fa-flask';
-    const gradientClass = l.tipo === 'Hemograma' ? 'from-rose-400 to-rose-600' : 'from-violet-400 to-violet-600';
-    const badgeClass = l.tipo === 'Hemograma' ? 'bg-rose-100 text-rose-700' : 'bg-violet-100 text-violet-700';
+    const statusClass = l.status === 'concluido' ? 'status-concluido' : l.status === 'pendente' ? 'status-pendente' : 'status-cancelado';
     return `
       <div class="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 rounded-lg bg-gradient-to-br ${gradientClass} flex items-center justify-center text-white">
-              <i class="fas ${iconClass} text-xl"></i>
-            </div>
+            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white"><i class="fas fa-file-medical text-xl"></i></div>
             <div>
               <div class="flex items-center gap-2">
                 <h4 class="font-bold text-slate-800">${l.pacienteNome}</h4>
-                <span class="px-2 py-0.5 rounded text-xs font-bold ${badgeClass}">${l.tipo}</span>
+                <span class="px-2 py-0.5 rounded text-xs font-bold ${statusClass}">${l.status.toUpperCase()}</span>
               </div>
-              <p class="text-sm text-slate-500">${l.especie} • ${l.raca || 'SRD'} • Tutor: ${l.tutor}</p>
+              <p class="text-sm text-slate-500">${l.tipo} • ${l.especie} • Tutor: ${l.tutor}</p>
               <p class="text-sm text-slate-400"><i class="fas fa-calendar mr-1"></i> ${l.dataCompleta}</p>
             </div>
           </div>
           <div class="flex gap-2">
-            <button onclick="visualizarLaudo(${l.id})" class="px-4 py-2 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 transition">
-              <i class="fas fa-eye mr-1"></i> Ver
-            </button>
-            <button onclick="excluirLaudo(${l.id})" class="px-4 py-2 rounded-lg bg-rose-500 text-white font-semibold hover:bg-rose-600 transition">
-              <i class="fas fa-trash"></i>
-            </button>
+            <button onclick="visualizarLaudo(${l.id})" class="px-4 py-2 rounded-lg bg-sky-500 text-white font-semibold hover:bg-sky-600 transition"><i class="fas fa-eye mr-1"></i> Ver</button>
+            <button onclick="editarLaudo(${l.id})" class="px-4 py-2 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition"><i class="fas fa-edit"></i></button>
+            <button onclick="excluirLaudo(${l.id})" class="px-4 py-2 rounded-lg bg-rose-500 text-white font-semibold hover:bg-rose-600 transition"><i class="fas fa-trash"></i></button>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
+}
+
+function editarLaudo(id) {
+  const l = laudos.find(x => x.id === id);
+  if (!l) return;
+  
+  const tipoMap = { 'Hemograma': 'hemograma', 'Bioquímica': 'bioquimica', 'Exame de Urina': 'urina', 'Exame de Fezes': 'fezes' };
+  const tipo = tipoMap[l.tipo];
+  if (!tipo) return;
+  
+  showSection(tipo);
+  setTimeout(() => {
+    document.getElementById(tipo + '-paciente').value = l.pacienteId;
+    document.getElementById(tipo === 'hemograma' ? 'hem-edit-id' : tipo === 'bioquimica' ? 'bio-edit-id' : tipo === 'urina' ? 'urina-edit-id' : 'fezes-edit-id').value = l.id;
+    
+    // Preenche campos
+    Object.keys(l.dados).forEach(key => {
+      const el = document.getElementById((tipo === 'hemograma' ? 'hem-' : tipo === 'bioquimica' ? 'bio-' : tipo === 'urina' ? 'uri-' : 'fez-') + key);
+      if (el) el.value = l.dados[key];
+    });
+    document.getElementById(tipo === 'hemograma' ? 'hem-obs' : tipo === 'bioquimica' ? 'bio-obs' : tipo === 'urina' ? 'uri-obs' : 'fez-obs').value = l.dados.observacoes || '';
+  }, 100);
 }
 
 function excluirLaudo(id) {
-  if (confirm('Deseja realmente excluir este laudo?')) {
+  if (confirm('Excluir este laudo permanentemente?')) {
     laudos = laudos.filter(l => l.id !== id);
-    salvarDados();
-    renderizarLaudos();
-    showToast('Laudo excluído.', 'info');
+    salvarDados(); renderizarLaudos(); showToast('Laudo excluído.', 'info');
   }
 }
 
-// ============ VALORES DE REFERÊNCIA ============
+// ============ VISUALIZAÇÃO E PDF ============
 function verificarValor(valor, min, max) {
-  if (valor === 0 || valor === null || valor === undefined) return { status: 'pendente', classe: 'bg-slate-100 text-slate-500', texto: 'Pendente' };
-  if (valor < min) return { status: 'baixo', classe: 'status-baixo', texto: '↓ BAIXO' };
-  if (valor > max) return { status: 'alto', classe: 'status-alto', texto: '↑ ALTO' };
-  return { status: 'normal', classe: 'status-normal', texto: '✓ NORMAL' };
+  const v = parseFloat(valor);
+  if (isNaN(v) || valor === '' || valor === 'Negativo' || valor === 'Ausente' || valor === 'Não observado') return { classe: 'bg-slate-100 text-slate-500', texto: 'N/A' };
+  if (v < min) return { classe: 'status-baixo', texto: '↓ BAIXO' };
+  if (v > max) return { classe: 'status-alto', texto: '↑ ALTO' };
+  return { classe: 'status-normal', texto: '✓ NORMAL' };
 }
 
 function visualizarLaudo(id) {
-  const l = laudos.find(la => la.id === id);
+  const l = laudos.find(x => x.id === id);
   if (!l) return;
   
+  let html = `<div id="pdf-content" class="bg-white p-8">`;
+  html += `<div class="border-b-4 border-sky-500 pb-4 mb-6 flex items-center gap-4">
+    <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-2xl"><i class="fas fa-paw"></i></div>
+    <div><h1 class="text-2xl font-bold text-slate-800">${configuracoes.nome}</h1><p class="text-sm text-slate-600">${configuracoes.endereco} • ${configuracoes.telefone}</p></div>
+  </div>`;
+  
+  html += `<h2 class="text-xl font-bold text-slate-800 mb-4 text-center">LAUDO: ${l.tipo.toUpperCase()}</h2>`;
+  html += `<div class="bg-slate-50 rounded-lg p-4 mb-6 grid grid-cols-2 gap-2 text-sm">
+    <p><strong>Paciente:</strong> ${l.pacienteNome}</p><p><strong>Espécie/Raça:</strong> ${l.especie} / ${l.raca || 'SRD'}</p>
+    <p><strong>Tutor:</strong> ${l.tutor}</p><p><strong>Data:</strong> ${l.dataCompleta}</p>
+    <p><strong>Status:</strong> <span class="font-bold ${l.status === 'concluido' ? 'text-emerald-600' : 'text-amber-600'}">${l.status.toUpperCase()}</span></p>
+  </div>`;
+
   if (l.tipo === 'Hemograma') {
-    renderizarLaudoHemograma(l);
+    html += gerarTabelaLaudo([
+      {label:'Hemácias', val:l.dados.hemacias, ref:'5.5-8.5', min:5.5, max:8.5},
+      {label:'Hemoglobina', val:l.dados.hemoglobina, ref:'12.0-18.0', min:12, max:18},
+      {label:'Hematócrito', val:l.dados.hematocrito, ref:'37.0-55.0', min:37, max:55},
+      {label:'VGM', val:l.dados.vgm, ref:'60.0-77.0', min:60, max:77},
+      {label:'Leucócitos', val:l.dados.leucocitos, ref:'6000-17000', min:6000, max:17000},
+      {label:'Plaquetas', val:l.dados.plaquetas, ref:'200k-500k', min:200000, max:500000}
+    ]);
   } else if (l.tipo === 'Bioquímica') {
-    renderizarLaudoBioquimica(l);
+    html += gerarTabelaLaudo([
+      {label:'Ureia', val:l.dados.ureia, ref:'10-60', min:10, max:60},
+      {label:'Creatinina', val:l.dados.creatinina, ref:'0.5-1.8', min:0.5, max:1.8},
+      {label:'ALT', val:l.dados.alt, ref:'10-125', min:10, max:125},
+      {label:'Glicose', val:l.dados.glicose, ref:'70-143', min:70, max:143},
+      {label:'Proteínas Totais', val:l.dados.proteinas_totais, ref:'5.2-8.2', min:5.2, max:8.2},
+      {label:'Cálcio', val:l.dados.calcio, ref:'7.9-12.0', min:7.9, max:12}
+    ]);
+  } else if (l.tipo === 'Exame de Urina') {
+    html += `<table class="w-full text-sm mb-6"><thead class="bg-indigo-50"><tr><th class="p-2 text-left">Parâmetro</th><th class="p-2 text-center">Resultado</th></tr></thead><tbody>
+      <tr class="border-b"><td class="p-2">Cor / Aspecto</td><td class="p-2 text-center font-bold">${l.dados.cor || '-'} / ${l.dados.aspecto || '-'}</td></tr>
+      <tr class="border-b"><td class="p-2">Densidade / pH</td><td class="p-2 text-center font-bold">${l.dados.densidade || '-'} / ${l.dados.ph || '-'}</td></tr>
+      <tr class="border-b"><td class="p-2">Proteína / Glicose</td><td class="p-2 text-center font-bold">${l.dados.proteina || '-'} / ${l.dados.glicose || '-'}</td></tr>
+      <tr class="border-b"><td class="p-2">Sedimento (Leuc/Hem)</td><td class="p-2 text-center font-bold">${l.dados.leucocitos || '-'} / ${l.dados.hemacias || '-'}</td></tr>
+    </tbody></table>`;
+  } else if (l.tipo === 'Exame de Fezes') {
+    html += `<table class="w-full text-sm mb-6"><thead class="bg-amber-50"><tr><th class="p-2 text-left">Parâmetro</th><th class="p-2 text-center">Resultado</th></tr></thead><tbody>
+      <tr class="border-b"><td class="p-2">Cor / Consistência</td><td class="p-2 text-center font-bold">${l.dados.cor || '-'} / ${l.dados.consistencia || '-'}</td></tr>
+      <tr class="border-b"><td class="p-2">Muco / Sangue</td><td class="p-2 text-center font-bold">${l.dados.muco || '-'} / ${l.dados.sangue || '-'}</td></tr>
+      <tr class="border-b"><td class="p-2">Helmintos / Protozoários</td><td class="p-2 text-center font-bold">${l.dados.helmintos || '-'} / ${l.dados.protozoarios || '-'}</td></tr>
+    </tbody></table>`;
   }
-}
 
-function renderizarLaudoHemograma(l) {
-  const d = l.dados;
-  
-  const refs = {
-    hemacias: [5.5, 8.5],
-    hemoglobina: [12.0, 18.0],
-    hematocrito: [37.0, 55.0],
-    vgm: [60.0, 77.0],
-    hcm: [19.5, 24.5],
-    chcm: [32.0, 36.0],
-    leucocitos: [6000, 17000],
-    bastonetes: [0, 3],
-    neutrofilos: [60, 77],
-    eosinofilos: [2, 10],
-    basofilos: [0, 1],
-    linfocitos: [12, 30],
-    monocitos: [3, 10],
-    plaquetas: [200000, 500000],
-    vpm: [9.0, 13.0]
-  };
-  
-  const campos = [
-    { key: 'hemacias', label: 'Hemácias', unit: 'milhões/µL' },
-    { key: 'hemoglobina', label: 'Hemoglobina', unit: 'g/dL' },
-    { key: 'hematocrito', label: 'Hematócrito', unit: '%' },
-    { key: 'vgm', label: 'VGM', unit: 'fL' },
-    { key: 'hcm', label: 'HCM', unit: 'pg' },
-    { key: 'chcm', label: 'CHCM', unit: 'g/dL' },
-    { key: 'leucocitos', label: 'Leucócitos Totais', unit: 'µL' },
-    { key: 'bastonetes', label: 'Bastonetes', unit: '%' },
-    { key: 'neutrofilos', label: 'Neutrófilos Segmentados', unit: '%' },
-    { key: 'eosinofilos', label: 'Eosinófilos', unit: '%' },
-    { key: 'basofilos', label: 'Basófilos', unit: '%' },
-    { key: 'linfocitos', label: 'Linfócitos', unit: '%' },
-    { key: 'monocitos', label: 'Monócitos', unit: '%' },
-    { key: 'plaquetas', label: 'Plaquetas', unit: 'µL' },
-    { key: 'vpm', label: 'VPM', unit: 'fL' }
-  ];
-  
-  const html = `
-    <div style="display:block;">
-      <div class="border-b-4 border-sky-500 pb-4 mb-6">
-        <div class="flex items-center gap-4">
-          <div class="w-20 h-20 rounded-lg bg-gradient-to-br from-sky-400 to-emerald-400 flex items-center justify-center text-white font-bold text-3xl">
-            <i class="fas fa-paw"></i>
-          </div>
-          <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-sky-600 to-emerald-600 bg-clip-text text-transparent">TG Vet Diagnósticos</h1>
-            <p class="text-slate-600">Laboratório Veterinário</p>
-            <p class="text-sm text-slate-500">Rua dos Animais, 123 • Tel: (11) 99999-9999</p>
-          </div>
-        </div>
-      </div>
-      
-      <h2 class="text-2xl font-bold text-slate-800 mb-4 text-center">LAUDO DE HEMOGRAMA COMPLETO</h2>
-      
-      <div class="bg-slate-50 rounded-lg p-4 mb-6">
-        <h3 class="font-bold text-slate-800 mb-2">DADOS DO PACIENTE</h3>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <p><strong>Nome:</strong> ${l.pacienteNome}</p>
-          <p><strong>Espécie:</strong> ${l.especie}</p>
-          <p><strong>Raça:</strong> ${l.raca || 'SRD'}</p>
-          <p><strong>Sexo:</strong> ${l.sexo}</p>
-          <p><strong>Idade:</strong> ${l.idade || 'N/I'}</p>
-          <p><strong>Peso:</strong> ${l.peso ? l.peso + ' kg' : 'N/I'}</p>
-          <p><strong>Tutor:</strong> ${l.tutor}</p>
-          <p><strong>Telefone:</strong> ${l.telefone || 'N/I'}</p>
-        </div>
-        <p class="text-sm mt-2"><strong>Data do Exame:</strong> ${l.dataCompleta}</p>
-      </div>
-      
-      <div class="mb-6">
-        <h3 class="font-bold text-slate-800 mb-3 text-lg border-b-2 border-rose-500 pb-1">🔴 Eritrograma (Série Vermelha)</h3>
-        <table class="w-full text-sm">
-          <thead class="bg-rose-50">
-            <tr>
-              <th class="p-2 text-left">Parâmetro</th>
-              <th class="p-2 text-center">Resultado</th>
-              <th class="p-2 text-center">Valor de Referência</th>
-              <th class="p-2 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${campos.filter(c => ['hemacias','hemoglobina','hematocrito','vgm','hcm','chcm'].includes(c.key)).map(c => {
-              const v = d[c.key];
-              const ref = refs[c.key];
-              const st = verificarValor(v, ref[0], ref[1]);
-              return `
-                <tr class="border-b">
-                  <td class="p-2 font-medium">${c.label}</td>
-                  <td class="p-2 text-center font-bold">${v || '-'}</td>
-                  <td class="p-2 text-center text-slate-500">${ref[0]} - ${ref[1]} ${c.unit}</td>
-                  <td class="p-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${st.classe}">${st.texto}</span></td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="mb-6">
-        <h3 class="font-bold text-slate-800 mb-3 text-lg border-b-2 border-emerald-500 pb-1">🟢 Leucograma (Série Branca)</h3>
-        <table class="w-full text-sm">
-          <thead class="bg-emerald-50">
-            <tr>
-              <th class="p-2 text-left">Parâmetro</th>
-              <th class="p-2 text-center">Resultado</th>
-              <th class="p-2 text-center">Valor de Referência</th>
-              <th class="p-2 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${campos.filter(c => ['leucocitos','bastonetes','neutrofilos','eosinofilos','basofilos','linfocitos','monocitos'].includes(c.key)).map(c => {
-              const v = d[c.key];
-              const ref = refs[c.key];
-              const st = verificarValor(v, ref[0], ref[1]);
-              return `
-                <tr class="border-b">
-                  <td class="p-2 font-medium">${c.label}</td>
-                  <td class="p-2 text-center font-bold">${v || '-'}</td>
-                  <td class="p-2 text-center text-slate-500">${ref[0]} - ${ref[1]} ${c.unit}</td>
-                  <td class="p-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${st.classe}">${st.texto}</span></td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="mb-6">
-        <h3 class="font-bold text-slate-800 mb-3 text-lg border-b-2 border-amber-500 pb-1">🟡 Plaquetas</h3>
-        <table class="w-full text-sm">
-          <thead class="bg-amber-50">
-            <tr>
-              <th class="p-2 text-left">Parâmetro</th>
-              <th class="p-2 text-center">Resultado</th>
-              <th class="p-2 text-center">Valor de Referência</th>
-              <th class="p-2 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${campos.filter(c => ['plaquetas','vpm'].includes(c.key)).map(c => {
-              const v = d[c.key];
-              const ref = refs[c.key];
-              const st = verificarValor(v, ref[0], ref[1]);
-              return `
-                <tr class="border-b">
-                  <td class="p-2 font-medium">${c.label}</td>
-                  <td class="p-2 text-center font-bold">${v || '-'}</td>
-                  <td class="p-2 text-center text-slate-500">${ref[0]} - ${ref[1]} ${c.unit}</td>
-                  <td class="p-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${st.classe}">${st.texto}</span></td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-      
-      ${d.observacoes ? `
-        <div class="bg-slate-50 rounded-lg p-4 mb-6">
-          <h3 class="font-bold text-slate-800 mb-2">OBSERVAÇÕES E DIAGNÓSTICO</h3>
-          <p class="text-sm text-slate-700 whitespace-pre-wrap">${d.observacoes}</p>
-        </div>
-      ` : ''}
-      
-      <div class="mt-12 pt-8 border-t">
-        <div class="grid grid-cols-2 gap-8">
-          <div class="text-center">
-            <div class="border-b border-slate-400 mb-2"></div>
-            <p class="text-sm font-semibold">Dr. Veterinário Responsável</p>
-            <p class="text-xs text-slate-500">CRMV-XX 00000</p>
-          </div>
-          <div class="text-center">
-            <div class="border-b border-slate-400 mb-2"></div>
-            <p class="text-sm font-semibold">Bioquímico Responsável</p>
-            <p class="text-xs text-slate-500">CRBio 00000/00-D</p>
-          </div>
-        </div>
-        <p class="text-center text-xs text-slate-400 mt-6">TG Vet Diagnósticos © 2026 - Documento gerado eletronicamente</p>
-      </div>
-    </div>
-  `;
-  
+  if (l.dados.observacoes) {
+    html += `<div class="bg-slate-50 rounded-lg p-4 mb-6"><h3 class="font-bold text-slate-800 mb-2">OBSERVAÇÕES</h3><p class="text-sm text-slate-700 whitespace-pre-wrap">${l.dados.observacoes}</p></div>`;
+  }
+
+  // Controle de Status (só aparece no modal, não no PDF)
+  html += `<div class="mb-6 p-4 bg-slate-100 rounded-lg flex items-center gap-4">
+    <label class="font-bold text-slate-700">Alterar Status:</label>
+    <select onchange="atualizarStatusLaudo(${l.id}, this.value)" class="px-3 py-2 border rounded-lg">
+      <option value="pendente" ${l.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+      <option value="concluido" ${l.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+      <option value="cancelado" ${l.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+    </select>
+  </div>`;
+
+  html += `<div class="mt-12 pt-8 border-t grid grid-cols-2 gap-8 text-center">
+    <div><div class="border-b border-slate-400 mb-2"></div><p class="text-sm font-semibold">${configuracoes.resp}</p></div>
+    <div><div class="border-b border-slate-400 mb-2"></div><p class="text-sm font-semibold">Responsável Técnico</p></div>
+  </div></div>`;
+
   document.getElementById('conteudo-laudos').innerHTML = html;
   document.getElementById('modal-laudos').classList.remove('hidden');
 }
 
-function renderizarLaudoBioquimica(l) {
-  const d = l.dados;
-  
-  const grupos = {
-    renal: { titulo: '🔴 Função Renal', classe: 'grupo-renal', bgClasse: 'grupo-renal-bg', campos: ['ureia', 'creatinina'] },
-    hepatica: { titulo: '🟢 Função Hepática', classe: 'grupo-hepatica', bgClasse: 'grupo-hepatica-bg', campos: ['alt', 'ast', 'fa', 'ggt', 'bilirrubina-total', 'bilirrubina-direta'] },
-    metabolismo: { titulo: '🟡 Glicemia e Metabolismo', classe: 'grupo-metabolismo', bgClasse: 'grupo-metabolismo-bg', campos: ['glicose'] },
-    lipidico: { titulo: '🟠 Perfil Lipídico', classe: 'grupo-lipidico', bgClasse: 'grupo-lipidico-bg', campos: ['colesterol', 'triglicerides'] },
-    proteinas: { titulo: '🔵 Proteínas Séricas', classe: 'grupo-proteinas', bgClasse: 'grupo-proteinas-bg', campos: ['proteinas-totais', 'albumina', 'globulina'] },
-    minerais: { titulo: '🟣 Minerais e Eletrólitos', classe: 'grupo-minerais', bgClasse: 'grupo-minerais-bg', campos: ['calcio', 'fosforo', 'sodio', 'potassio', 'cloro'] }
+function gerarTabelaLaudo(campos) {
+  let html = `<table class="w-full text-sm mb-6"><thead class="bg-sky-50"><tr><th class="p-2 text-left">Parâmetro</th><th class="p-2 text-center">Resultado</th><th class="p-2 text-center">Ref.</th><th class="p-2 text-center">Status</th></tr></thead><tbody>`;
+  campos.forEach(c => {
+    const st = verificarValor(c.val, c.min, c.max);
+    html += `<tr class="border-b"><td class="p-2 font-medium">${c.label}</td><td class="p-2 text-center font-bold">${c.val || '-'}</td><td class="p-2 text-center text-slate-500">${c.ref}</td><td class="p-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${st.classe}">${st.texto}</span></td></tr>`;
+  });
+  return html + `</tbody></table>`;
+}
+
+function atualizarStatusLaudo(id, novoStatus) {
+  const idx = laudos.findIndex(l => l.id === id);
+  if (idx !== -1) {
+    laudos[idx].status = novoStatus;
+    salvarDados();
+    showToast('Status atualizado!', 'success');
+    renderizarLaudos();
+    atualizarDashboard();
+  }
+}
+
+function baixarPDF() {
+  const element = document.getElementById('pdf-content');
+  if (!element) return;
+  const opt = {
+    margin: 10,
+    filename: `Laudo_TG_Vet_${Date.now()}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
-  
-  let tabelasHtml = '';
-  Object.keys(grupos).forEach(gk => {
-    const g = grupos[gk];
-    const camposDoGrupo = camposBioquimica.filter(c => g.campos.includes(c.key));
-    tabelasHtml += `
-      <div class="mb-6">
-        <h3 class="font-bold text-slate-800 mb-3 text-lg border-b-2 ${g.classe} pb-1">${g.titulo}</h3>
-        <table class="w-full text-sm">
-          <thead class="${g.bgClasse}">
-            <tr>
-              <th class="p-2 text-left">Parâmetro</th>
-              <th class="p-2 text-center">Resultado</th>
-              <th class="p-2 text-center">Valor de Referência</th>
-              <th class="p-2 text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${camposDoGrupo.map(c => {
-              const v = d[c.key];
-              const st = verificarValor(v, c.min, c.max);
-              return `
-                <tr class="border-b">
-                  <td class="p-2 font-medium">${c.label}</td>
-                  <td class="p-2 text-center font-bold">${v || '-'}</td>
-                  <td class="p-2 text-center text-slate-500">${c.min} - ${c.max} ${c.unit}</td>
-                  <td class="p-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${st.classe}">${st.texto}</span></td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  });
-  
-  const anomalias = [];
-  camposBioquimica.forEach(c => {
-    const v = d[c.key];
-    if (v && v !== 0) {
-      if (v < c.min) anomalias.push({ nome: c.label, tipo: 'baixo', valor: v, ref: `${c.min}-${c.max}` });
-      else if (v > c.max) anomalias.push({ nome: c.label, tipo: 'alto', valor: v, ref: `${c.min}-${c.max}` });
-    }
-  });
-  
-  const html = `
-    <div style="display:block;">
-      <div class="border-b-4 border-violet-500 pb-4 mb-6">
-        <div class="flex items-center gap-4">
-          <div class="w-20 h-20 rounded-lg bg-gradient-to-br from-violet-400 to-fuchsia-400 flex items-center justify-center text-white font-bold text-3xl">
-            <i class="fas fa-paw"></i>
-          </div>
-          <div>
-            <h1 class="text-3xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">TG Vet Diagnósticos</h1>
-            <p class="text-slate-600">Laboratório Veterinário</p>
-            <p class="text-sm text-slate-500">Rua dos Animais, 123 • Tel: (11) 99999-9999</p>
-          </div>
-        </div>
-      </div>
-      
-      <h2 class="text-2xl font-bold text-slate-800 mb-4 text-center">LAUDO DE PERFIL BIOQUÍMICO</h2>
-      
-      <div class="bg-slate-50 rounded-lg p-4 mb-6">
-        <h3 class="font-bold text-slate-800 mb-2">DADOS DO PACIENTE</h3>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <p><strong>Nome:</strong> ${l.pacienteNome}</p>
-          <p><strong>Espécie:</strong> ${l.especie}</p>
-          <p><strong>Raça:</strong> ${l.raca || 'SRD'}</p>
-          <p><strong>Sexo:</strong> ${l.sexo}</p>
-          <p><strong>Idade:</strong> ${l.idade || 'N/I'}</p>
-          <p><strong>Peso:</strong> ${l.peso ? l.peso + ' kg' : 'N/I'}</p>
-          <p><strong>Tutor:</strong> ${l.tutor}</p>
-          <p><strong>Telefone:</strong> ${l.telefone || 'N/I'}</p>
-        </div>
-        <p class="text-sm mt-2"><strong>Data do Exame:</strong> ${l.dataCompleta}</p>
-        <p class="text-xs text-slate-500 mt-1 italic">* Valores de referência para cães adultos.</p>
-      </div>
-      
-      ${tabelasHtml}
-      
-      ${anomalias.length > 0 ? `
-        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4 mb-6">
-          <h3 class="font-bold text-amber-800 mb-2 flex items-center gap-2">
-            <i class="fas fa-exclamation-triangle"></i> ALERTAS IDENTIFICADOS
-          </h3>
-          <ul class="text-sm text-amber-900 space-y-1">
-            ${anomalias.map(a => `
-              <li>
-                <span class="font-semibold">${a.nome}</span>: 
-                <span class="${a.tipo === 'alto' ? 'text-rose-700' : 'text-orange-700'}">
-                  ${a.tipo === 'alto' ? '↑ ALTO' : '↓ BAIXO'} (${a.valor})
-                </span>
-                <span class="text-slate-600">- Ref: ${a.ref}</span>
-              </li>
-            `).join('')}
-          </ul>
-        </div>
-      ` : `
-        <div class="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-4 mb-6">
-          <h3 class="font-bold text-emerald-800 flex items-center gap-2">
-            <i class="fas fa-check-circle"></i> PARÂMETROS DENTRO DA NORMALIDADE
-          </h3>
-          <p class="text-sm text-emerald-700 mt-1">Todos os parâmetros analisados encontram-se dentro dos valores de referência.</p>
-        </div>
-      `}
-      
-      ${d.observacoes ? `
-        <div class="bg-slate-50 rounded-lg p-4 mb-6">
-          <h3 class="font-bold text-slate-800 mb-2">OBSERVAÇÕES E DIAGNÓSTICO</h3>
-          <p class="text-sm text-slate-700 whitespace-pre-wrap">${d.observacoes}</p>
-        </div>
-      ` : ''}
-      
-      <div class="mt-12 pt-8 border-t">
-        <div class="grid grid-cols-2 gap-8">
-          <div class="text-center">
-            <div class="border-b border-slate-400 mb-2"></div>
-            <p class="text-sm font-semibold">Dr. Veterinário Responsável</p>
-            <p class="text-xs text-slate-500">CRMV-XX 00000</p>
-          </div>
-          <div class="text-center">
-            <div class="border-b border-slate-400 mb-2"></div>
-            <p class="text-sm font-semibold">Bioquímico Responsável</p>
-            <p class="text-xs text-slate-500">CRBio 00000/00-D</p>
-          </div>
-        </div>
-        <p class="text-center text-xs text-slate-400 mt-6">TG Vet Diagnósticos © 2026 - Documento gerado eletronicamente</p>
-      </div>
-    </div>
-  `;
-  
-  document.getElementById('conteudo-laudos').innerHTML = html;
-  document.getElementById('modal-laudos').classList.remove('hidden');
-}
-
-// ============ HISTÓRICO ============
-function renderizarHistorico() {
-  const lista = document.getElementById('lista-historico');
-  if (laudos.length === 0) {
-    lista.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">Nenhum registro encontrado.</p>';
-    return;
-  }
-  
-  lista.innerHTML = laudos.slice().reverse().map(l => {
-    const d = l.dados;
-    let resumoHtml = '';
-    let anomalias = [];
-    
-    if (l.tipo === 'Hemograma') {
-      if (d.hemoglobina < 12) anomalias.push('Anemia');
-      if (d.leucocitos > 17000) anomalias.push('Leucocitose');
-      if (d.plaquetas < 200000) anomalias.push('Trombocitopenia');
-      resumoHtml = `
-        <div><span class="text-slate-500">Hemácias:</span> <strong>${d.hemacias}</strong></div>
-        <div><span class="text-slate-500">Hb:</span> <strong>${d.hemoglobina}</strong></div>
-        <div><span class="text-slate-500">Ht:</span> <strong>${d.hematocrito}%</strong></div>
-        <div><span class="text-slate-500">Leuc:</span> <strong>${d.leucocitos}</strong></div>
-        <div><span class="text-slate-500">Plaq:</span> <strong>${d.plaquetas}</strong></div>
-        <div><span class="text-slate-500">VGM:</span> <strong>${d.vgm}</strong></div>
-      `;
-    } else if (l.tipo === 'Bioquímica') {
-      if (d.glicose > 143) anomalias.push('Hiperglicemia');
-      if (d.glicose > 0 && d.glicose < 70) anomalias.push('Hipoglicemia');
-      if (d.ureia > 60) anomalias.push('Ureia elevada');
-      if (d.creatinina > 1.8) anomalias.push('Creatinina elevada');
-      if (d.alt > 125) anomalias.push('ALT elevada');
-      resumoHtml = `
-        <div><span class="text-slate-500">Glic:</span> <strong>${d.glicose}</strong></div>
-        <div><span class="text-slate-500">Ureia:</span> <strong>${d.ureia}</strong></div>
-        <div><span class="text-slate-500">Creat:</span> <strong>${d.creatinina}</strong></div>
-        <div><span class="text-slate-500">ALT:</span> <strong>${d.alt}</strong></div>
-        <div><span class="text-slate-500">FA:</span> <strong>${d.fa}</strong></div>
-        <div><span class="text-slate-500">Alb:</span> <strong>${d.albumina}</strong></div>
-      `;
-    }
-    
-    const tipoIcon = l.tipo === 'Hemograma' ? 'fa-vial' : 'fa-flask';
-    const tipoBg = l.tipo === 'Hemograma' ? 'bg-rose-100 text-rose-600' : 'bg-violet-100 text-violet-600';
-    
-    return `
-      <div class="border border-slate-200 rounded-lg p-4">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-lg ${tipoBg} flex items-center justify-center">
-              <i class="fas ${tipoIcon}"></i>
-            </div>
-            <div>
-              <h4 class="font-bold text-slate-800">${l.pacienteNome} <span class="text-sm font-normal text-slate-500">- ${l.tipo}</span></h4>
-              <p class="text-sm text-slate-500">${l.dataCompleta}</p>
-            </div>
-          </div>
-          <span class="px-3 py-1 rounded-full text-xs font-bold ${anomalias.length > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
-            ${anomalias.length > 0 ? '⚠ ' + anomalias.slice(0,2).join(', ') : '✓ Normal'}
-          </span>
-        </div>
-        <div class="grid grid-cols-3 md:grid-cols-6 gap-2 text-xs mt-3 pt-3 border-t border-slate-100">
-          ${resumoHtml}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function exportarDados() {
-  try {
-    const dados = { pacientes, laudos, exportadoEm: new Date().toISOString() };
-    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `tgv_backup_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Dados exportados com sucesso!', 'success');
-  } catch (e) {
-    console.error('Erro ao exportar:', e);
-    showToast('Erro ao exportar dados.', 'error');
-  }
+  showToast('Gerando PDF...', 'info');
+  html2pdf().set(opt).from(element).save().then(() => showToast('PDF baixado com sucesso!', 'success'));
 }
 
 function fecharModal() {
   document.getElementById('modal-laudos').classList.add('hidden');
 }
 
-// ============ INICIALIZAÇÃO ============
-carregarDados();
-atualizarDashboard();
+// ============ CONFIGURAÇÕES (Admin) ============
+function renderizarConfiguracoes() {
+  document.getElementById('conf-nome').value = configuracoes.nome;
+  document.getElementById('conf-endereco').value = configuracoes.endereco;
+  document.getElementById('conf-telefone').value = configuracoes.telefone;
+  document.getElementById('conf-resp').value = configuracoes.resp;
+  
+  const lista = document.getElementById('lista-usuarios');
+  lista.innerHTML = usuarios.map(u => `
+    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+      <div><p class="font-semibold text-slate-800">${u.nome || u.username}</p><p class="text-xs text-slate-500">${u.role === 'admin' ? 'Administrador' : 'Veterinário'}</p></div>
+      ${u.username !== 'admin' ? `<button onclick="excluirUsuario(${u.id})" class="text-rose-500 hover:text-rose-700"><i class="fas fa-trash"></i></button>` : '<span class="text-xs text-slate-400">Padrão</span>'}
+    </div>`).join('');
+}
 
-document.getElementById('modal-laudos').addEventListener('click', function(e) {
-  if (e.target === this) fecharModal();
+document.getElementById('form-config-clinica').addEventListener('submit', function(e) {
+  e.preventDefault();
+  configuracoes.nome = document.getElementById('conf-nome').value;
+  configuracoes.endereco = document.getElementById('conf-endereco').value;
+  configuracoes.telefone = document.getElementById('conf-telefone').value;
+  configuracoes.resp = document.getElementById('conf-resp').value;
+  salvarDados(); aplicarPermissoes(); showToast('Configurações salvas!', 'success');
 });
 
-console.log('Sistema TG Vet Diagnósticos inicializado com sucesso!');
-</script>
+document.getElementById('form-usuario').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const novoUser = {
+    id: Date.now() + Math.random(),
+    username: document.getElementById('conf-user-nome').value.trim(),
+    password: document.getElementById('conf-user-senha').value,
+    role: document.getElementById('conf-user-role').value,
+    nome: document.getElementById('conf-user-nome').value.trim()
+  };
+  usuarios.push(novoUser);
+  salvarDados(); renderizarConfiguracoes(); this.reset(); showToast('Usuário adicionado!', 'success');
+});
 
+function excluirUsuario(id) {
+  if (confirm('Excluir este usuário?')) {
+    usuarios = usuarios.filter(u => u.id !== id);
+    salvarDados(); renderizarConfiguracoes(); showToast('Usuário excluído.', 'info');
+  }
+}
+
+// ============ HISTÓRICO E EXPORTAÇÃO ============
+function renderizarHistorico() {
+  const lista = document.getElementById('lista-historico');
+  if (laudos.length === 0) { lista.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">Nenhum registro.</p>'; return; }
+  lista.innerHTML = laudos.slice().reverse().map(l => `
+    <div class="border border-slate-200 rounded-lg p-4 flex justify-between items-center">
+      <div><h4 class="font-bold text-slate-800">${l.pacienteNome} - ${l.tipo}</h4><p class="text-sm text-slate-500">${l.dataCompleta}</p></div>
+      <span class="px-3 py-1 rounded-full text-xs font-bold ${l.status === 'concluido' ? 'bg-emerald-100 text-emerald-700' : l.status === 'pendente' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}">${l.status.toUpperCase()}</span>
+    </div>`).join('');
+}
+
+function exportarDados() {
+  const dados = { pacientes, laudos, usuarios, configuracoes, exportadoEm: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `backup_tgv_${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Backup exportado!', 'success');
+}
+
+// ============ TOAST & INIT ============
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>${message}`;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.animation = 'slideIn 0.3s ease reverse'; setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+document.getElementById('modal-laudos').addEventListener('click', function(e) { if (e.target === this) fecharModal(); });
+
+// Inicialização
+carregarDados();
+checkAuth();
+</script>
 </body>
 </html>
